@@ -10,7 +10,12 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (NumberOfPlayers == 2)
 	{
-
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			bUseSeamlessTravel = true;
+			World->ServerTravel(FString("/ Game / Map / PlayerMap?listen"));
+		}
 	}
 
 }
