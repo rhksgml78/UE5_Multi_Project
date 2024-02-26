@@ -22,6 +22,9 @@ class SKH_MULTISHOOTING_API AWeapon : public AActor
 public:	
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
+	void ShowPickupWidget(bool bShowWidget);
+	// 복제용 함수
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -37,6 +40,14 @@ protected:
 		const FHitResult& SweepResult
 	);
 
+	UFUNCTION()
+	void OnSphereEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex
+	);
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	USkeletalMeshComponent* WeaponMesh;
@@ -45,11 +56,17 @@ private:
 	class USphereComponent* AreaSphere;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	EWeaponState WeaponState;
-
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	class UWidgetComponent* PickupWidget;
 
-public:	
+	// 무기의 상태값을 복사하여 사용할 수 있도록 매크로를 사용한다.
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon")
+	EWeaponState WeaponState;
 
+	// 값이 변경되면 호출되는 함수
+	UFUNCTION()
+	void OnRep_WeaponState();
+
+public:	
+	void SetWeaponState(EWeaponState State);
+	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 };
