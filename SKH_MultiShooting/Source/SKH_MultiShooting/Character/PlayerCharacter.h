@@ -32,6 +32,8 @@ protected:
 	// ¾×¼Ç
 	void EquipButtonPressed(); //E Key
 	void CrouchButtonPressed(); // L,R Shift key
+	void AimButtonPressed(); // Right Mouse
+	void AimButtonReleased(); // Right UnMouse
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -59,4 +61,5 @@ private:
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
+	bool IsAiming();
 };

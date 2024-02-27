@@ -85,7 +85,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ThisClass::EquipButtonPressed);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
-
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ThisClass::AimButtonPressed);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
 
 }
 
@@ -139,6 +140,15 @@ void APlayerCharacter::EquipButtonPressed()
 	}
 }
 
+// 클라이언트에서 호출
+void APlayerCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (Combat)
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
 void APlayerCharacter::CrouchButtonPressed()
 {
 	if (bIsCrouched)
@@ -151,12 +161,19 @@ void APlayerCharacter::CrouchButtonPressed()
 	}
 }
 
-// 클라이언트에서 호출
-void APlayerCharacter::ServerEquipButtonPressed_Implementation()
+void APlayerCharacter::AimButtonPressed()
 {
 	if (Combat)
 	{
-		Combat->EquipWeapon(OverlappingWeapon);
+		Combat->SetAiming(true);
+	}
+}
+
+void APlayerCharacter::AimButtonReleased()
+{
+	if (Combat)
+	{
+		Combat->SetAiming(false);
 	}
 }
 
@@ -197,4 +214,9 @@ void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 bool APlayerCharacter::IsWeaponEquipped()
 {
 	return (Combat && Combat->EquippedWeapon);
+}
+
+bool APlayerCharacter::IsAiming()
+{
+	return (Combat && Combat->bAiming);
 }

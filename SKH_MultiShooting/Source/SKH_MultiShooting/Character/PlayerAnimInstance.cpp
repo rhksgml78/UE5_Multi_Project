@@ -45,4 +45,6 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 캐릭터가 웅크렸는지
 	bIsCrouched = PlayerCharacter->bIsCrouched;
 
+	// 캐릭터가 조준하고있는지
+	bAiming = PlayerCharacter->IsAiming();
 }
