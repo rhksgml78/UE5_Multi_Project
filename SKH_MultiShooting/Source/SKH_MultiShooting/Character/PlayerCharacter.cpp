@@ -6,6 +6,7 @@
 #include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/Weapon/Weapon.h"
 #include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -31,6 +32,10 @@ APlayerCharacter::APlayerCharacter()
 	Combat->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
