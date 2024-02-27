@@ -31,6 +31,7 @@ protected:
 
 	// ¾×¼Ç
 	void EquipButtonPressed(); //E Key
+	void CrouchButtonPressed(); // L,R Shift key
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)

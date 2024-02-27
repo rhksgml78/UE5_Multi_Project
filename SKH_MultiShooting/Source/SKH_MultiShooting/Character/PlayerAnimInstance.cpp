@@ -39,6 +39,10 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 삼항 연산자를 사용한 캐릭터의 가속도에 대한 변수. 캐릭터의 가속 수치가 0보다 클경우 true 반환, 작을경우 false 반환.
 	bIsAccelerationg = PlayerCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
 
+	// 무기를 장착했는지
 	bWeaponEquipped = PlayerCharacter->IsWeaponEquipped();
+
+	// 캐릭터가 웅크렸는지
+	bIsCrouched = PlayerCharacter->bIsCrouched;
 
 }
