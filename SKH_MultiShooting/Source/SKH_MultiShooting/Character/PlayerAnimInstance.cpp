@@ -53,6 +53,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 캐릭터가 조준하고있는지
 	bAiming = PlayerCharacter->IsAiming();
 
+	// 회전변수 동기화. 인스턴스의 값에 플레이어 값넣기
+	TurningInplace = PlayerCharacter->GetTurningInPlace();
+
 	// 애임의 회전값(Yaw)
 	FRotator AimRotation = PlayerCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(PlayerCharacter->GetVelocity());

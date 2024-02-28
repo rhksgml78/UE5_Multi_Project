@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "SKH_MultiShooting/PlayerTypes/TurningInPlace.h"
+
 #include "PlayerAnimInstance.generated.h"
 
 //애니메이션 인스턴스에서는 변수들위주로 선언
@@ -62,4 +64,9 @@ private:
 	// FABRIK IK 변수 (왼손. 오른손은 소잡이에 고정되어있음) 무기에 왼손을 놓을 소켓 만들어두고 그위치에 설정할것
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	FTransform LeftHandTransform;
+
+
+	// 플레이어 회전 관련 변수
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	ETurningInPlace TurningInplace;
 };

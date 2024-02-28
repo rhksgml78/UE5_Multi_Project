@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "SKH_MultiShooting/PlayerTypes/TurningInPlace.h"
 
 #include "PlayerCharacter.generated.h"
 
@@ -66,12 +67,17 @@ private:
 	float AO_Pitch;
 	FRotator StartingAimRotation;
 
+	// 플레이어 회전 관련 변수
+	ETurningInPlace TurningInplace;
+	void TurnInPlace(float Deltatime);
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
 	bool IsAiming();
 
+	AWeapon* GetEquippedWeapon();
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AWeapon* GetEquippedWeapon();
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInplace; }
 };
