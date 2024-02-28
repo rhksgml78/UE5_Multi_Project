@@ -34,6 +34,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bWeaponEquipped;
 
+	class AWeapon* EquippedWeapon;
+
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bIsCrouched;
 
@@ -49,4 +51,15 @@ private:
 	FRotator CharacterRotationLastFrame;
 	FRotator CharacterRotation;
 	FRotator DeltaRotation;
+
+	// 에임오프셋용 Yaw Pitch
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float AO_Yaw;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float AO_Pitch;
+
+	// FABRIK IK 변수 (왼손. 오른손은 소잡이에 고정되어있음) 무기에 왼손을 놓을 소켓 만들어두고 그위치에 설정할것
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FTransform LeftHandTransform;
 };

@@ -7,6 +7,7 @@
 #include "SKH_MultiShooting/Weapon/Weapon.h"
 #include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -74,6 +75,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//에임오프셋용 업데이트
+	AimOffset(DeltaTime);
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -182,6 +185,44 @@ void APlayerCharacter::AimButtonReleased()
 	}
 }
 
+void APlayerCharacter::AimOffset(float DeltaTime)
+{
+	// 무기가 없으면 리턴
+	if (Combat && Combat->EquippedWeapon == nullptr) return;
+
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	// 속도가 0이고 점프상태가아닐때
+	if (Speed == 0.f && !bIsInAir)
+	{
+		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+
+		AO_Yaw = DeltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+
+	// 캐릭터가 움직이고있거나 점프상태일때
+	if (Speed > 0.f || bIsInAir)
+	{
+		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	// 클라이언트에 전송되는 각도의값은 음수없이 0~360의 양수로 압축되어 전송되므로 예외처리가 필요하다.
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRage(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRage, AO_Pitch);
+	}
+}
+
 void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 {
 	// 해당함수는 UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon) 매크로를 통하여 오버랩된 무기가바뀔때 한번 호출된다.
@@ -224,4 +265,14 @@ bool APlayerCharacter::IsWeaponEquipped()
 bool APlayerCharacter::IsAiming()
 {
 	return (Combat && Combat->bAiming);
+}
+
+AWeapon* APlayerCharacter::GetEquippedWeapon()
+{
+	if (Combat == nullptr)
+	{
+		return nullptr;
+	}
+
+	return Combat->EquippedWeapon;
 }

@@ -4,6 +4,8 @@
 
 #include "Weapon.generated.h"
 
+class USphereComponent;
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -69,4 +71,5 @@ private:
 public:	
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 };

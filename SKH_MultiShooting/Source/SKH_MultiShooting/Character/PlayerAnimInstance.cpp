@@ -2,6 +2,7 @@
 #include "PlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "SKH_MultiShooting/Weapon/Weapon.h"
 
 void UPlayerAnimInstance::NativeInitializeAnimation()
 {
@@ -43,6 +44,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 무기를 장착했는지
 	bWeaponEquipped = PlayerCharacter->IsWeaponEquipped();
 
+	// FABRIK IK용 무기 변수에 값 넣기
+	EquippedWeapon = PlayerCharacter->GetEquippedWeapon();
+
 	// 캐릭터가 웅크렸는지
 	bIsCrouched = PlayerCharacter->bIsCrouched;
 
@@ -64,4 +68,25 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	const float Target = Delta.Yaw / DeltaTime;
 	const float Interp = FMath::FInterpTo(Lean, Target, DeltaTime, 6.f);
 	Lean = FMath::Clamp(Interp, -90.f, 90.f);
+
+	// 플레이어 클래스에서 계산된 AO_Yaw 값을 넣는다.
+	AO_Yaw = PlayerCharacter->GetAO_Yaw();
+	AO_Pitch = PlayerCharacter->GetAO_Pitch();
+
+
+	// FABRIK IK
+	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && PlayerCharacter->GetMesh())
+	{
+		// 왼손 위치의 변수에 무기 소켓 위치(월드)저장
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+
+		FVector OutPosition;
+		FRotator OutRotation;
+
+		PlayerCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
+
+		// 왼손의 위치와 회전값을 저장
+		LeftHandTransform.SetLocation(OutPosition);
+		LeftHandTransform.SetRotation(FQuat(OutRotation));
+	}
 }
