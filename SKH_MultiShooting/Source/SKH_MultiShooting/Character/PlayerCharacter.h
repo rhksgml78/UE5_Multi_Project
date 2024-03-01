@@ -39,6 +39,8 @@ protected:
 	// 애임오프셋
 	void AimOffset(float DeltaTime);
 
+	void CalculateAO_Pitch();
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
@@ -64,12 +66,13 @@ private:
 
 	// 에임오프셋용 변수
 	float AO_Yaw;
+	float InterpAO_Yaw;
 	float AO_Pitch;
 	FRotator StartingAimRotation;
 
 	// 플레이어 회전 관련 변수
 	ETurningInPlace TurningInplace;
-	void TurnInPlace(float Deltatime);
+	void TurnInPlace(float DeltaTime);
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

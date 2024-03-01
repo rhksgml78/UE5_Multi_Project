@@ -39,6 +39,8 @@ APlayerCharacter::APlayerCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 	TurningInplace = ETurningInPlace::ETIP_NotTurning;
+	NetUpdateFrequency = 66.f;
+	MinNetUpdateFrequency = 33.f;
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -204,7 +206,11 @@ void APlayerCharacter::AimOffset(float DeltaTime)
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 
 		AO_Yaw = DeltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (TurningInplace == ETurningInPlace::ETIP_NotTurning)
+		{
+			InterpAO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
 		TurnInPlace(DeltaTime);
 	}
 
@@ -217,6 +223,11 @@ void APlayerCharacter::AimOffset(float DeltaTime)
 		TurningInplace = ETurningInPlace::ETIP_NotTurning;
 	}
 
+	CalculateAO_Pitch();
+}
+
+void APlayerCharacter::CalculateAO_Pitch()
+{
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	// 클라이언트에 전송되는 각도의값은 음수없이 0~360의 양수로 압축되어 전송되므로 예외처리가 필요하다.
 	if (AO_Pitch > 90.f && !IsLocallyControlled())
@@ -240,10 +251,9 @@ void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-void APlayerCharacter::TurnInPlace(float Deltatime)
+void APlayerCharacter::TurnInPlace(float DeltaTime)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("AO_Yaw : %f"), AO_Yaw);
-
 	if (AO_Yaw > 90.f)
 	{
 		TurningInplace = ETurningInPlace::ETIP_Right;
@@ -251,6 +261,17 @@ void APlayerCharacter::TurnInPlace(float Deltatime)
 	else if (AO_Yaw < -90.f)
 	{
 		TurningInplace = ETurningInPlace::ETIP_Left;
+	}
+	if (TurningInplace != ETurningInPlace::ETIP_NotTurning)
+	{
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.f);
+		AO_Yaw = InterpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurningInplace = ETurningInPlace::ETIP_NotTurning;
+
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
 	}
 }
 
