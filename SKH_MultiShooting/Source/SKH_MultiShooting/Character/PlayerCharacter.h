@@ -35,6 +35,7 @@ protected:
 	void CrouchButtonPressed(); // L,R Shift key
 	void AimButtonPressed(); // Right Mouse
 	void AimButtonReleased(); // Right UnMouse
+	virtual void Jump() override;
 
 	// 애임오프셋
 	void AimOffset(float DeltaTime);
