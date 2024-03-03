@@ -21,6 +21,9 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	// 몽타주 재생
+	void PlayFireMontage(bool bAiming);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -31,11 +34,14 @@ protected:
 	void LookUp(float Value);
 
 	// 액션
+	virtual void Jump() override;
 	void EquipButtonPressed(); //E Key
 	void CrouchButtonPressed(); // L,R Shift key
-	void AimButtonPressed(); // Right Mouse
-	void AimButtonReleased(); // Right UnMouse
-	virtual void Jump() override;
+	void AimButtonPressed(); // Right Mouse Button(Down)
+	void AimButtonReleased(); // Right UnMouse Button(Up)
+	void FireButtonPressed(); // Left Mouse Button(Down)
+	void FireButtonReleased(); // Left Mouse Button(Up)
+	
 
 	// 애임오프셋
 	void AimOffset(float DeltaTime);
@@ -74,6 +80,10 @@ private:
 	// 플레이어 회전 관련 변수
 	ETurningInPlace TurningInplace;
 	void TurnInPlace(float DeltaTime);
+
+	// 애니메이션 몽타주 관련
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* FireWeaponMontage;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

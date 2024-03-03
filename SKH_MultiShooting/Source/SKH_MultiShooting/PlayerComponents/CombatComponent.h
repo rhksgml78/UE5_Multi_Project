@@ -31,6 +31,9 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	//UFUNCTION()
+	void FireButtonPressed(bool bPressed);
+
 private:
 	class APlayerCharacter* Character;
 
@@ -45,6 +48,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
+
+	bool bFireButtonPressed;
 
 public:	
 	void SetMaxWalkSpeed(float Value);
