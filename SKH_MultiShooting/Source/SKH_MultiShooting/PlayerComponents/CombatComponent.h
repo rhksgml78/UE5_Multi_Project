@@ -4,6 +4,7 @@
 
 #include "CombatComponent.generated.h"
 
+#define TRACE_LENGTH 8000.f
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SKH_MULTISHOOTING_API UCombatComponent : public UActorComponent
@@ -31,8 +32,17 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
-	//UFUNCTION()
 	void FireButtonPressed(bool bPressed);
+
+	// 복사용 함수
+	UFUNCTION(Server, Reliable)
+	void ServerFire();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire();
+
+	// 충돌판정용
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 private:
 	class APlayerCharacter* Character;

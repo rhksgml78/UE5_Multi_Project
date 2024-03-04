@@ -28,6 +28,9 @@ public:
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 발사용 함수
+	void Fire();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -67,6 +70,10 @@ private:
 	// 값이 변경되면 호출되는 함수
 	UFUNCTION()
 	void OnRep_WeaponState();
+
+	// 무기의 애니메이션
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	class UAnimationAsset* FireAnimation;
 
 public:	
 	void SetWeaponState(EWeaponState State);

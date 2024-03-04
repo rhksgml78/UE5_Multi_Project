@@ -4,6 +4,8 @@
 #include "Components/WidgetComponent.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
 
 AWeapon::AWeapon()
 {
@@ -114,5 +116,13 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	//#include "Net/UnrealNetwork.h" 포함 필요
 	DOREPLIFETIME(AWeapon, WeaponState);
 
+}
+
+void AWeapon::Fire()
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
 }
 
