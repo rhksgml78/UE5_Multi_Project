@@ -28,8 +28,8 @@ public:
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// 발사용 함수
-	void Fire();
+	// 발사용 함수(재정의 할 수 있도록)
+	virtual void Fire(const FVector& HitTarget);
 
 protected:
 	virtual void BeginPlay() override;

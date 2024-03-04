@@ -61,6 +61,8 @@ private:
 
 	bool bFireButtonPressed;
 
+	FVector HitTarget;
+
 public:	
 	void SetMaxWalkSpeed(float Value);
 };
