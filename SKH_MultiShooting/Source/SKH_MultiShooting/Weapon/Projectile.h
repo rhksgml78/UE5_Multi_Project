@@ -16,12 +16,21 @@ public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
 
+	// 파괴 함수
+	virtual void Destroyed() override;
+
 protected:
 	virtual void BeginPlay() override;
 
+	// 피격이벤트(바인딩해야함)
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 private:
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
@@ -30,6 +39,13 @@ private:
 	class UParticleSystem* Tracer;
 
 	class UParticleSystemComponent* TracerComponent;
+
+	// 피격시 이벤트 관련
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ImpactSound;
 
 public:	
 

@@ -36,10 +36,10 @@ protected:
 
 	// 복사용 함수
 	UFUNCTION(Server, Reliable)
-	void ServerFire();
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire();
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	// 충돌판정용
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
@@ -60,8 +60,6 @@ private:
 	float AimWalkSpeed;
 
 	bool bFireButtonPressed;
-
-	FVector HitTarget;
 
 public:	
 	void SetMaxWalkSpeed(float Value);
