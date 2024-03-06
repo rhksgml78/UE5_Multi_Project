@@ -66,6 +66,12 @@ private:
 
 	bool bFireButtonPressed;
 
+	// HUD와 크로스헤어
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
+	float CrosshairFiredFactor;
+
 public:	
 	void SetMaxWalkSpeed(float Value);
+
 };

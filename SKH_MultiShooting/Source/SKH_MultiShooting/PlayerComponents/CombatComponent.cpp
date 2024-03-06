@@ -72,6 +72,50 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				HUDPackage.CrossHairTop = nullptr;
 				HUDPackage.CrossHairBottom = nullptr;
 			}
+
+			// 크로스헤어 퍼짐 업데이트 (캐릭터의 움직임에 따라 벌어지거나 공격할떄 벌어짐)
+			// 캐릭터의 최소속도~최대속도를 0~1의 값으로 노멀라이즈
+			FVector2D WalkSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplierRange(0.f, 1.f);
+			FVector Velocity = Character->GetVelocity();
+			Velocity.Z = 0.f;
+
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+
+			// 공중에있거나 점프했을때 벌어지게설정
+			if (Character->GetCharacterMovement()->IsFalling())
+			{
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.5f, DeltaTime, 2.5f);
+			}
+			else
+			{
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			// 캐릭터가 사격을 할때
+			if (bFireButtonPressed)
+			{
+				// 조준중이 아니라면 크게퍼지고
+				if (!bAiming)
+				{
+					CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 2.5f, DeltaTime, 10.f);
+				}
+
+				// 조준중이라면 약하게퍼지고
+				else
+				{
+					CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 1.5f, DeltaTime, 5.f);
+				}
+
+			}
+			else
+			{
+				CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 0.f, DeltaTime, 15.f);
+			}
+		
+
+			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor + CrosshairFiredFactor;
+		
 			HUD->SetHUDPackage(HUDPackage);
 		}
 	}
