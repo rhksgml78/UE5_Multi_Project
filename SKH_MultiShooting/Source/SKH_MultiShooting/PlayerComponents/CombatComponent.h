@@ -44,8 +44,13 @@ protected:
 	// 충돌판정용
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	// 크로스헤어 세팅
+	void SetHUDCrosshairs(float DeltaTime);
+
 private:
 	class APlayerCharacter* Character;
+	class AFirstPlayerController* Controller;
+	class APlayerHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	class AWeapon* EquippedWeapon;

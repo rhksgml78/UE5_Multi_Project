@@ -7,6 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
+#include "SKH_MultiShooting/HUD/PlayerHUD.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -29,6 +31,50 @@ void UCombatComponent::BeginPlay()
 
 	// 처음에 움직임속도 지정
 	SetMaxWalkSpeed(BaseWalkSpeed);
+}
+
+void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	SetHUDCrosshairs(DeltaTime);
+
+}
+
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
+{
+	if (Character == nullptr || Character->Controller == nullptr) return;
+
+	// 컨트롤러가 nullptr 일경우 캐스팅해서 넣어주고 아니면 컨트롤러를 그대로
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		HUD = HUD == nullptr ? Cast<APlayerHUD>(Controller->GetHUD()) : HUD;
+		if (HUD)
+		{
+			FHUDPackage HUDPackage;
+
+			if (EquippedWeapon)
+			{
+				// 무기를 장착했을때 그무기에 설정된 텍스처를 넣어준다.
+				HUDPackage.CrossHairCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrossHairLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrossHairRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrossHairTop = EquippedWeapon->CrosshairsTop;
+				HUDPackage.CrossHairBottom = EquippedWeapon->CrosshairsBottom;
+			}
+			else
+			{
+				// 무기를 장착하지 않았을때 비워두기
+				HUDPackage.CrossHairCenter = nullptr;
+				HUDPackage.CrossHairLeft = nullptr;
+				HUDPackage.CrossHairRight = nullptr;
+				HUDPackage.CrossHairTop = nullptr;
+				HUDPackage.CrossHairBottom = nullptr;
+			}
+			HUD->SetHUDPackage(HUDPackage);
+		}
+	}
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)
@@ -137,11 +183,6 @@ void UCombatComponent::SetMaxWalkSpeed(float Value)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = Value;
 	}
-}
-
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)

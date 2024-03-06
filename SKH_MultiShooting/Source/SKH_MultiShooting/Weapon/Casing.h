@@ -21,7 +21,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// 피격이벤트(바인딩해야함) 바닥이나 어딘가 충돌했을때 객체가 파괴 되도록
+	// 피격이벤트(바인딩해야함)
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 

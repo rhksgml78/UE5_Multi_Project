@@ -31,6 +31,7 @@ void ACasing::BeginPlay()
 	// 스태틱메시의 Hit와 바인딩
 	CasingMesh->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
 	CasingMesh->AddImpulse(GetActorForwardVector() * EjectionImpulse);
+	
 
 
 	// 생성되자마자 5초의 타이머를 실행
@@ -48,6 +49,14 @@ void ACasing::BeginPlay()
 
 		// 5초 후에 Destroy 함수 실행
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, DestroyTimer, false);
+		
+		// 랜덤 회전 값 생성
+		FRotator RandomRotation;
+		RandomRotation.Yaw = FMath::RandRange(0.f, 360.f);
+		RandomRotation.Pitch = FMath::RandRange(0.f, 360.f);
+		RandomRotation.Roll = FMath::RandRange(0.f, 360.f);
+		// 액터의 회전 값 설정
+		SetActorRotation(RandomRotation);
 	}
 
 }

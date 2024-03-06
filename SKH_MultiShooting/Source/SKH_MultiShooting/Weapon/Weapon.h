@@ -31,6 +31,22 @@ public:
 	// 발사용 함수(재정의 할 수 있도록)
 	virtual void Fire(const FVector& HitTarget);
 
+	// 크로스헤어 그리기용 변수(벌어지는 애니메이션을 위해서 여러 부위로 나뉨)
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* CrosshairsCenter;
+
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* CrosshairsLeft;
+
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* CrosshairsRight;
+
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* CrosshairsTop;
+
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* CrosshairsBottom;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -78,6 +94,7 @@ private:
 	// 탄피
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
+
 
 public:	
 	void SetWeaponState(EWeaponState State);
