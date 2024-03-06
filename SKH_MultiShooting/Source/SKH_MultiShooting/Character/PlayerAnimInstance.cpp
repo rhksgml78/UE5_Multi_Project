@@ -91,5 +91,27 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		// 왼손의 위치와 회전값을 저장
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		// 무기를 가진 오른손의 손목(Hand_R) 본의 회전을 조정(사격방향으로) 블루프린트에서 부를 수 있는 변수에 값을 넣어주고 애니메이션 블루프린트에서 손목의 회전값을 변경한다.
+		FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
+
+		if (PlayerCharacter->IsLocallyControlled())
+		{
+			bLocallyControlled = true;
+			// 오른손의 본의 X축은 손끝이아닌 어깨방향이기때문에 방향을 한번 돌려주어야 한다.
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - PlayerCharacter->GetHitTarget()));
+		}
+
+		/*
+		// 총구의 끝에서 라인그리기
+		FTransform MuzzleTipTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
+
+		FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));
+
+		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.f, FColor::Red);
+
+		// 크로스헤어 조준점으로 디버그라인
+		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), PlayerCharacter->GetHitTarget(), FColor::Orange);
+		*/
 	}
 }

@@ -95,4 +95,6 @@ public:
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInplace; }
 
+	FVector GetHitTarget() const;
+
 };

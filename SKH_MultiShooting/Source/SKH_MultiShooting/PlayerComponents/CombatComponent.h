@@ -71,6 +71,9 @@ private:
 	float CrosshairInAirFactor;
 	float CrosshairFiredFactor;
 
+	// µð¹ö±×
+	FVector HitTarget;
+
 public:	
 	void SetMaxWalkSpeed(float Value);
 

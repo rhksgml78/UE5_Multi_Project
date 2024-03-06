@@ -69,4 +69,13 @@ private:
 	// 플레이어 회전 관련 변수
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	ETurningInPlace TurningInplace;
+
+	// 플레이어의 오른손 회전 관련
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FRotator RightHandRotation;
+
+	// 오른손보정은 컨트롤하고있는 플레이어만 보정되어 보이도록 하기 위한 변수
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bLocallyControlled;
+
 };
