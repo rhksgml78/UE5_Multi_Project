@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "SKH_MultiShooting/HUD/PlayerHUD.h"
 
 #include "CombatComponent.generated.h"
 
@@ -67,9 +68,11 @@ private:
 	bool bFireButtonPressed;
 
 	// HUD와 크로스헤어
+	FHUDPackage HUDPackage;
 	float CrosshairVelocityFactor;
 	float CrosshairInAirFactor;
-	float CrosshairFiredFactor;
+	float CrosshairShootingFactor;
+	float CrosshairAimFactor;
 
 	// 조준위치
 	FVector HitTarget;

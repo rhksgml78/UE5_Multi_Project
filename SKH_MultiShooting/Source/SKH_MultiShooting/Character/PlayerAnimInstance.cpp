@@ -56,6 +56,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 회전변수 동기화. 인스턴스의 값에 플레이어 값넣기
 	TurningInplace = PlayerCharacter->GetTurningInPlace();
 
+	// 루트본 회전 관련 동기화
+	bRotateRootBone = PlayerCharacter->ShouldRotateRootBone();
+
 	// 애임의 회전값(Yaw)
 	FRotator AimRotation = PlayerCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(PlayerCharacter->GetVelocity());
@@ -92,14 +95,19 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 
-		// 무기를 가진 오른손의 손목(Hand_R) 본의 회전을 조정(사격방향으로) 블루프린트에서 부를 수 있는 변수에 값을 넣어주고 애니메이션 블루프린트에서 손목의 회전값을 변경한다.
-		FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
+
 
 		if (PlayerCharacter->IsLocallyControlled())
 		{
 			bLocallyControlled = true;
 			// 오른손의 본의 X축은 손끝이아닌 어깨방향이기때문에 방향을 한번 돌려주어야 한다.
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - PlayerCharacter->GetHitTarget()));
+		
+			// 무기를 가진 오른손의 손목(Hand_R) 본의 회전을 조정(사격방향으로) 블루프린트에서 부를 수 있는 변수에 값을 넣어주고 애니메이션 블루프린트에서 손목의 회전값을 변경한다.
+			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
+
+			FRotator LookAtRoTation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - PlayerCharacter->GetHitTarget()));
+
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRoTation, DeltaTime, 30.f);
 		}
 
 		/*

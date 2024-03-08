@@ -21,33 +21,33 @@ void APlayerHUD::DrawHUD()
 		if (HUDPackage.CrossHairCenter)
 		{
 			FVector2D Spread(0.f, 0.f);
-			DrawCrosshiar(HUDPackage.CrossHairCenter, ViewportCenter, Spread);
+			DrawCrosshiar(HUDPackage.CrossHairCenter, ViewportCenter, Spread, HUDPackage.CrosshairsColor);
 		}
 		if (HUDPackage.CrossHairLeft)
 		{
 			FVector2D Spread(-SpreadScaled, 0.f);
-			DrawCrosshiar(HUDPackage.CrossHairLeft, ViewportCenter, Spread);
+			DrawCrosshiar(HUDPackage.CrossHairLeft, ViewportCenter, Spread, HUDPackage.CrosshairsColor);
 		}
 		if (HUDPackage.CrossHairRight)
 		{
 			FVector2D Spread(SpreadScaled, 0.f);
-			DrawCrosshiar(HUDPackage.CrossHairRight, ViewportCenter, Spread);
+			DrawCrosshiar(HUDPackage.CrossHairRight, ViewportCenter, Spread, HUDPackage.CrosshairsColor);
 		}
 		if (HUDPackage.CrossHairTop)
 		{
 			FVector2D Spread(0.f, -SpreadScaled);
-			DrawCrosshiar(HUDPackage.CrossHairTop, ViewportCenter, Spread);
+			DrawCrosshiar(HUDPackage.CrossHairTop, ViewportCenter, Spread, HUDPackage.CrosshairsColor);
 		}
 		if (HUDPackage.CrossHairBottom)
 		{
 			FVector2D Spread(0.f, SpreadScaled);
-			DrawCrosshiar(HUDPackage.CrossHairBottom, ViewportCenter, Spread);
+			DrawCrosshiar(HUDPackage.CrossHairBottom, ViewportCenter, Spread, HUDPackage.CrosshairsColor);
 		}
 	}
 
 }
 
-void APlayerHUD::DrawCrosshiar(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread)
+void APlayerHUD::DrawCrosshiar(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread, FLinearColor CrosshairsColor)
 {
 	// 현재 텍스처의 좌표는 왼쪽상단(0,0)에서 우측하단(1,1)이기 때문에 텍스처 자체의 중심을 계산해야함.
 
@@ -68,7 +68,7 @@ void APlayerHUD::DrawCrosshiar(UTexture2D* Texture, FVector2D ViewportCenter, FV
 		0.f,
 		1.f,
 		1.f,
-		FLinearColor::White
+		CrosshairsColor
 	);
 
 }

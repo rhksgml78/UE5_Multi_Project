@@ -8,8 +8,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
-#include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "Camera/CameraComponent.h"
+//#include "SKH_MultiShooting/HUD/PlayerHUD.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -75,8 +75,6 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		HUD = HUD == nullptr ? Cast<APlayerHUD>(Controller->GetHUD()) : HUD;
 		if (HUD)
 		{
-			FHUDPackage HUDPackage;
-
 			if (EquippedWeapon)
 			{
 				// 무기를 장착했을때 그무기에 설정된 텍스처를 넣어준다.
@@ -115,29 +113,25 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 			}
 
-			// 캐릭터가 사격을 할때
-			if (bFireButtonPressed)
+			// 조준 했을때
+			if (bAiming)
 			{
-				// 조준중이 아니라면 크게퍼지고
-				if (!bAiming)
-				{
-					CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 2.5f, DeltaTime, 10.f);
-				}
-
-				// 조준중이라면 약하게퍼지고
-				else
-				{
-					CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 1.5f, DeltaTime, 5.f);
-				}
-
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.58f, DeltaTime, 30.f);
 			}
 			else
 			{
-				CrosshairFiredFactor = FMath::FInterpTo(CrosshairFiredFactor, 0.f, DeltaTime, 15.f);
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
 			}
 		
+			// 사격 했을 때 추가된값 0으로 보간시키기
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 10.f);
 
-			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor + CrosshairFiredFactor;
+			HUDPackage.CrosshairSpread =
+				0.5f +
+				CrosshairVelocityFactor +
+				CrosshairInAirFactor +
+				CrosshairShootingFactor -
+				CrosshairAimFactor;
 		
 			HUD->SetHUDPackage(HUDPackage);
 		}
@@ -185,6 +179,11 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 		FHitResult HitResult;
 		TraceUnderCrosshairs(HitResult);
 		ServerFire(HitResult.ImpactPoint);
+
+		if (EquippedWeapon)
+		{
+			CrosshairShootingFactor = 0.75f;
+		}
 	}
 }
 
@@ -233,21 +232,38 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		// 라인트레이스를 위한 시작지점과 끝지점 설정
 		FVector Start = CrosshairWorldPosition;
 
+		// 카메라의 위치에서 부터 시작되고 있으나 Self의 메쉬나 다른메쉬가 캐릭터와 카메라사이에올 경우 조준을 뒤로 하는 문제가 있다. 때문에 트레이스의 시작지점을 카메라의 위치보다 앞에서 시작
+
+		if (Character)
+		{
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+		}
+
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 
-		// 라인트레이스 진행 하고 TraceHitResult에 저장
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
+		GetWorld()->LineTraceSingleByChannel(
 			TraceHitResult,
 			Start,
 			End,
 			ECollisionChannel::ECC_Visibility
 		);
-		
-		// 트레이스에 실패했거나 피격지점이 무효할 경우
-		if (!bHit || !TraceHitResult.IsValidBlockingHit())
+
+		// 피격지점이 무효할 경우
+		if (!TraceHitResult.IsValidBlockingHit())
 		{
 			// TRACE_LENGTH 거리에 ImpactPoint를 설정
 			TraceHitResult.ImpactPoint = Start + CrosshairWorldDirection * TRACE_LENGTH;
+		}
+
+		// 플레이어와 충돌했을때 크로스헤어 색상 변경 트레이스 결과에 액터가 있고 액터의 인터페이스가 구현되어 있다면
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		{
+			HUDPackage.CrosshairsColor = FLinearColor::Red;
+		}
+		else
+		{
+			HUDPackage.CrosshairsColor = FLinearColor::White;
 		}
 	}
 }

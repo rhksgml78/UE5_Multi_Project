@@ -20,6 +20,9 @@ public:
 
 	// 크로스헤어를 벌어지게하는 변수
 	float CrosshairSpread;
+
+	// 크로스헤어의 색상 변수(디폴트 흰색)
+	FLinearColor CrosshairsColor = FLinearColor::White;
 };
 
 UCLASS()
@@ -34,7 +37,7 @@ public:
 private:
 	FHUDPackage HUDPackage;
 
-	void DrawCrosshiar(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread);
+	void DrawCrosshiar(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread, FLinearColor CrosshairsColor);
 
 	// 크로스헤어의 퍼짐 최대치
 	UPROPERTY(EditAnywhere)

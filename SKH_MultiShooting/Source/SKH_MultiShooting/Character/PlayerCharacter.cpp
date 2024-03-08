@@ -9,6 +9,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerAnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "SKH_MultiShooting/SKH_MultiShooting.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -37,7 +39,11 @@ APlayerCharacter::APlayerCharacter()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
+
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
 	// 캐릭터가 움직이는 방향으로 회전할때의 속도 기본360.f
 	GetCharacterMovement()->RotationRate.Yaw = 720.f;
@@ -45,6 +51,7 @@ APlayerCharacter::APlayerCharacter()
 	TurningInplace = ETurningInPlace::ETIP_NotTurning;
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -89,6 +96,19 @@ void APlayerCharacter::PlayFireMontage(bool bAiming)
 
 }
 
+void APlayerCharacter::PlayHitReactMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName("FromFront");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -99,8 +119,34 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//에임오프셋용 업데이트
-	AimOffset(DeltaTime);
+	// 로컬룰의 기준에따라 캐릭터가 회전하는 것을 다르게
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		//에임오프셋용 업데이트
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		// 시간측정 변수를 하나두고 일정시간이 지나도 캐릭터의 움직임이없으면 업데이트 되지 않기때문에 변수의 시간이 어느정도 지난후에
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25)
+		{
+			// 복제된 움직임을 업데이트 시킨다.
+			OnRep_ReplicatedMovement();
+		}
+		CalculateAO_Pitch();
+	}
+
+	// 카메라 가려짐 보안
+	HideCameraIfCharacterClose();
+}
+
+void APlayerCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -239,19 +285,27 @@ void APlayerCharacter::Jump()
 	}
 }
 
+float APlayerCharacter::CalculateSpeed()
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	return Velocity.Size();
+}
+
 void APlayerCharacter::AimOffset(float DeltaTime)
 {
 	// 무기가 없으면 리턴
 	if (Combat && Combat->EquippedWeapon == nullptr) return;
 
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.f;
-	float Speed = Velocity.Size();
+	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
 	// 속도가 0이고 점프상태가아닐때
 	if (Speed == 0.f && !bIsInAir)
 	{
+		// 루트본 회전 관련
+		bRotateRootBone = true;
+
 		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 
@@ -267,6 +321,9 @@ void APlayerCharacter::AimOffset(float DeltaTime)
 	// 캐릭터가 움직이고있거나 점프상태일때
 	if (Speed > 0.f || bIsInAir)
 	{
+		// 루트본 회전 관련
+		bRotateRootBone = false;
+
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
@@ -287,6 +344,45 @@ void APlayerCharacter::CalculateAO_Pitch()
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRage, AO_Pitch);
 	}
 }
+
+void APlayerCharacter::SimProxiesTurn()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	bRotateRootBone = false;
+
+	float Speed = CalculateSpeed();
+	if (Speed > 0.f)
+	{
+		TurningInplace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
+	// 캐릭터가 회전했을때 회전 애니메이션 재생
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+	
+	// 절대값 먼저비교
+	if (FMath::Abs(ProxyYaw) > TurnThreshold)
+	{
+		if (ProxyYaw > TurnThreshold)
+		{
+			TurningInplace = ETurningInPlace::ETIP_Right;
+		}
+		else if (ProxyYaw < -TurnThreshold)
+		{
+			TurningInplace = ETurningInPlace::ETIP_Left;
+		}
+		else
+		{
+			TurningInplace = ETurningInPlace::ETIP_NotTurning;
+		}
+		return;
+	}
+	TurningInplace = ETurningInPlace::ETIP_NotTurning;
+}
+
 
 void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 {
@@ -324,6 +420,37 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 		}
 	}
 }
+
+void APlayerCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
+void APlayerCharacter::HideCameraIfCharacterClose()
+{
+	// 플레이하고있는 본인이 아니라면 반환
+	if (!IsLocallyControlled()) return;
+
+	// 플레이하고있는(로컬컨트롤) 본인의 캐릭터에만 적용
+	if (CameraThreshold > (FollowCamera->GetComponentLocation() - GetActorLocation()).Size())
+	{
+		GetMesh()->SetVisibility(false);
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
+
 
 void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
