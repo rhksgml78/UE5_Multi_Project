@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
+#include "Camera/CameraComponent.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -31,19 +32,33 @@ void UCombatComponent::BeginPlay()
 
 	// 처음에 움직임속도 지정
 	SetMaxWalkSpeed(BaseWalkSpeed);
+
+	if (Character)
+	{
+		if (Character->GetFollowCamera())
+		{
+			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
+			CurrentFOV = DefaultFOV;
+		}
+	}
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	SetHUDCrosshairs(DeltaTime);
-
 	if (Character && Character->IsLocallyControlled())
 	{
+		// 피격위치 확인
 		FHitResult HitResult;
 		TraceUnderCrosshairs(HitResult);
 		HitTarget = HitResult.ImpactPoint;
+
+		// 크로스 헤어 그리기
+		SetHUDCrosshairs(DeltaTime);
+
+		// 시점 변경
+		InterpFOV(DeltaTime);
 	}
 
 
@@ -217,15 +232,45 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	{
 		// 라인트레이스를 위한 시작지점과 끝지점 설정
 		FVector Start = CrosshairWorldPosition;
+
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 
 		// 라인트레이스 진행 하고 TraceHitResult에 저장
-		GetWorld()->LineTraceSingleByChannel(
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
 			TraceHitResult,
 			Start,
 			End,
 			ECollisionChannel::ECC_Visibility
 		);
+		
+		// 트레이스에 실패했거나 피격지점이 무효할 경우
+		if (!bHit || !TraceHitResult.IsValidBlockingHit())
+		{
+			// TRACE_LENGTH 거리에 ImpactPoint를 설정
+			TraceHitResult.ImpactPoint = Start + CrosshairWorldDirection * TRACE_LENGTH;
+		}
+	}
+}
+
+void UCombatComponent::InterpFOV(float DeltaTime)
+{
+	if (EquippedWeapon == nullptr) return;
+
+
+	// 조준시 무기에 설정된 FOV변경 속도값에 의하여 줌인 줌아웃의 기능을 구현한다.
+	if (bAiming)
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+	}
+	else
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
+	}
+	
+	// FOV 값의 보간이 완료된후 Set
+	if (Character && Character->GetFollowCamera())
+	{
+		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 	}
 }
 
