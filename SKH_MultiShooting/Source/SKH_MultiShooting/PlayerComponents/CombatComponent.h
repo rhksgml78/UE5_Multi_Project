@@ -35,6 +35,9 @@ protected:
 
 	void FireButtonPressed(bool bPressed);
 
+	// 발사용 함수
+	void Fire();
+
 	// 복사용 함수
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
@@ -47,6 +50,7 @@ protected:
 
 	// 크로스헤어 세팅
 	void SetHUDCrosshairs(float DeltaTime);
+
 
 private:
 	class APlayerCharacter* Character;
@@ -89,6 +93,13 @@ private:
 	float ZoomInterpSpeed = 20.f;
 
 	void InterpFOV(float DeltaTime);
+
+	// 연속발사를 위한 타이머
+	FTimerHandle FireTimer; // 타이머 핸들
+	bool bCanFire = true; // 점화식 불변수
+	void StartFireTimer(); // 시작함수
+	void FireTimerFinished(); // 콜백함수
+
 
 public:	
 	void SetMaxWalkSpeed(float Value);

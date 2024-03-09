@@ -47,6 +47,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	class UTexture2D* CrosshairsBottom;
 
+	// 발사관련 변수
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float FireDelay = 0.15f; // 타이머 콜 주기(BP에서 무기마다 다르게 설정하여 연사속도 조절 가능
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bAutomatic = true; // 연사, 점사 무기 구분
+
 protected:
 	virtual void BeginPlay() override;
 

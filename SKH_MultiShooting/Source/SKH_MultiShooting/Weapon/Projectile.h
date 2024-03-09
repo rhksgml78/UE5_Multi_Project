@@ -41,8 +41,13 @@ private:
 	class UParticleSystemComponent* TracerComponent;
 
 	// 피격시 이벤트 관련
+	bool bHitPlayer = false;
+
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BloodParticles;
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;

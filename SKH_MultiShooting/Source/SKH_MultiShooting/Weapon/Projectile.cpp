@@ -70,6 +70,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
 	if (PlayerCharacter)
 	{
+		bHitPlayer = true;
 		PlayerCharacter->MulticastHit();
 	}
 
@@ -90,9 +91,21 @@ void AProjectile::Destroyed()
 	Super::Destroyed();
 
 	// 파티클과 사운드를 출력시킨다.
-	if (ImpactParticles)
+	if (bHitPlayer)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+		// 플레이어 피격시
+		if (BloodParticles)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
+		}
+	}
+	else
+	{
+		// 그외 피격시
+		if (ImpactParticles)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+		}
 	}
 
 	// 피격 사운드는 나중에 재질에 따라 다른 사운드  출력필요
