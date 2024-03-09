@@ -11,6 +11,9 @@
 #include "PlayerAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "SKH_MultiShooting/SKH_MultiShooting.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Particles/ParticleSystem.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -424,6 +427,11 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 void APlayerCharacter::MulticastHit_Implementation()
 {
 	PlayHitReactMontage();
+
+	if (BloodParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
+	}
 }
 
 void APlayerCharacter::HideCameraIfCharacterClose()

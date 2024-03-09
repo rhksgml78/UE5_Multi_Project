@@ -41,6 +41,7 @@ private:
 	class UParticleSystemComponent* TracerComponent;
 
 	// 피격시 이벤트 관련
+	UPROPERTY(Replicated)
 	bool bHitPlayer = false;
 
 	UPROPERTY(EditAnywhere)
@@ -53,5 +54,10 @@ private:
 	class USoundCue* ImpactSound;
 
 public:	
+	// 복제용 함수
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 파티클 재생 함수
+	void SpawnParticleEffects();
 
 };

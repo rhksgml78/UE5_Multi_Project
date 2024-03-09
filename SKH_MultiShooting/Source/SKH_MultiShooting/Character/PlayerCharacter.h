@@ -117,6 +117,10 @@ private:
 	// 속도 관련
 	float CalculateSpeed();
 
+	// 파티클 관련
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BloodParticles;
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();

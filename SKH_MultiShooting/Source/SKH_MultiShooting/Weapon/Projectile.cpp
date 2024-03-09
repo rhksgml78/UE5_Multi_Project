@@ -7,6 +7,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundCue.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/SKH_MultiShooting.h"
 
 AProjectile::AProjectile()
@@ -70,10 +71,8 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
 	if (PlayerCharacter)
 	{
-		bHitPlayer = true;
 		PlayerCharacter->MulticastHit();
 	}
-
 	
 	// 이벤트를 마치고 해당 액터는 파괴된다. 이때 단순히 Destroy 함수를 호출하면 AActor의 Destroyed 가 호출되는데 이것을 재정의한다.
 	Destroy();
@@ -89,23 +88,23 @@ void AProjectile::Destroyed()
 {
 	// Destroyed 함수는 클라이언트에서도 호출되도록 구현 되어져 있다. 때문에 클라이언트에서 도 아래의 기능들이 호출 될 것이다.
 	Super::Destroyed();
+	SpawnParticleEffects();
 
+}
+
+void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AProjectile, bHitPlayer);
+}
+
+void AProjectile::SpawnParticleEffects()
+{
 	// 파티클과 사운드를 출력시킨다.
-	if (bHitPlayer)
+	if (ImpactParticles)
 	{
-		// 플레이어 피격시
-		if (BloodParticles)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
-		}
-	}
-	else
-	{
-		// 그외 피격시
-		if (ImpactParticles)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
-		}
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
 	}
 
 	// 피격 사운드는 나중에 재질에 따라 다른 사운드  출력필요
@@ -114,4 +113,3 @@ void AProjectile::Destroyed()
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 	}
 }
-
