@@ -29,6 +29,9 @@ public:
 	// 캐릭터의 움직임이 변할때마다 호출되는 함수(매프레임X)
 	virtual void OnRep_ReplicatedMovement() override;
 
+	// 사망시 탈락 처리할 함수
+	void Elim();
+
 protected:
 	virtual void BeginPlay() override;
 

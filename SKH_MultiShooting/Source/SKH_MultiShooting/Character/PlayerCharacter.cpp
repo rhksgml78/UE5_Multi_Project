@@ -15,6 +15,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
+#include "SKH_MultiShooting/GameMode/PlayerGameMode.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -163,6 +164,12 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 
 	SimProxiesTurn();
 	TimeSinceLastMovementReplication = 0.f;
+}
+
+void APlayerCharacter::Elim()
+{
+	// 탈락처리된 캐릭터를 사망처리하고 리스폰 시킬 수 있도록
+
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -415,6 +422,22 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
 	}
+
+	// 체력이 0이 되었을때
+	if (Health == 0.f)
+	{
+		APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
+		if (PlayerGameMode)
+		{
+			FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+			// 체력을 0으로 만든(공격한) 플레이어의 컨트롤러
+			AFirstPlayerController* AttackerController = Cast<AFirstPlayerController>(InstigatorController);
+
+			PlayerGameMode->PlayerEliminated(this, FirstPlayerController, AttackerController);
+		}
+	}
+
 }
 
 void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
