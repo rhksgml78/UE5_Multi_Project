@@ -25,11 +25,13 @@ public:
 	// 몽타주 재생
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
+	void PlayElimMontage();
 
 	// 캐릭터의 움직임이 변할때마다 호출되는 함수(매프레임X)
 	virtual void OnRep_ReplicatedMovement() override;
 
 	// 사망시 탈락 처리할 함수
+	UFUNCTION(NetMulticast, Reliable)
 	void Elim();
 
 protected:
@@ -106,6 +108,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* ElimMontage;
+
 	// 카메라 가려짐 보안
 	void HideCameraIfCharacterClose();
 
@@ -139,6 +144,9 @@ private:
 
 	class AFirstPlayerController* FirstPlayerController;
 
+	// 캐릭터가 사망(탈락)헀는지 판단할 변수
+	bool bElimmed = false;
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -151,6 +159,6 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInplace; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
-
+	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 
 };

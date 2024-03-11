@@ -53,6 +53,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 캐릭터가 조준하고있는지
 	bAiming = PlayerCharacter->IsAiming();
 
+	// 캐릭터의 상태 관련
+	bElimmed = PlayerCharacter->IsElimmed();
+
 	// 회전변수 동기화. 인스턴스의 값에 플레이어 값넣기
 	TurningInplace = PlayerCharacter->GetTurningInPlace();
 

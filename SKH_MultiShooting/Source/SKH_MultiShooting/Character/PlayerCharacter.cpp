@@ -117,6 +117,15 @@ void APlayerCharacter::PlayHitReactMontage()
 	}
 }
 
+void APlayerCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
+	}
+}
+
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -166,9 +175,11 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void APlayerCharacter::Elim()
+void APlayerCharacter::Elim_Implementation()
 {
 	// 탈락처리된 캐릭터를 사망처리하고 리스폰 시킬 수 있도록
+	bElimmed = true;
+	PlayElimMontage();
 
 }
 
