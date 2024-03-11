@@ -31,8 +31,9 @@ public:
 	virtual void OnRep_ReplicatedMovement() override;
 
 	// 사망시 탈락 처리할 함수
-	UFUNCTION(NetMulticast, Reliable)
 	void Elim();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim();
 
 protected:
 	virtual void BeginPlay() override;
@@ -146,6 +147,14 @@ private:
 
 	// 캐릭터가 사망(탈락)헀는지 판단할 변수
 	bool bElimmed = false;
+
+	// 리스폰을 위한 변수
+	FTimerHandle ElimTimer;
+	void ElimTimerFinishied(); // 콜백용 함수
+
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
+	
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

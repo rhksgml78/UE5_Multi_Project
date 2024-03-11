@@ -16,11 +16,16 @@
 #include "Particles/ParticleSystem.h"
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "SKH_MultiShooting/GameMode/PlayerGameMode.h"
+#include "TimerManager.h"
 
 
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// 캐릭터스폰시 충돌지점이 겹칠경우 재조정하여 무조건 스폰 되도록
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
 	CameraBoom->TargetArmLength = 450.f;
@@ -175,12 +180,33 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void APlayerCharacter::Elim_Implementation()
+void APlayerCharacter::Elim()
+{
+	// 서버에서 각 클라이언트에게 멀티캐스트 함수 호출
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+		this,
+		&ThisClass::ElimTimerFinishied,
+		ElimDelay
+	);
+}
+
+void APlayerCharacter::MulticastElim_Implementation()
 {
 	// 탈락처리된 캐릭터를 사망처리하고 리스폰 시킬 수 있도록
 	bElimmed = true;
 	PlayElimMontage();
 
+}
+
+void APlayerCharacter::ElimTimerFinishied()
+{
+	APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
+	if (PlayerGameMode)
+	{
+		PlayerGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -17,5 +17,7 @@ class SKH_MULTISHOOTING_API APlayerGameMode : public AGameMode
 public:
 	virtual void PlayerEliminated(class APlayerCharacter* ElimmedCharacter, class AFirstPlayerController* VictimController, AFirstPlayerController* AttackerController);
 	
+	// ¸®½ºÆù
+	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 	
 };
