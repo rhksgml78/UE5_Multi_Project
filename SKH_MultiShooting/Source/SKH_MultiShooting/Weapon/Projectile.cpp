@@ -67,13 +67,6 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// 프로젝타일과 충돌한 액터가 플레이어일때
-	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
-	if (PlayerCharacter)
-	{
-		PlayerCharacter->MulticastHit();
-	}
-	
 	// 이벤트를 마치고 해당 액터는 파괴된다. 이때 단순히 Destroy 함수를 호출하면 AActor의 Destroyed 가 호출되는데 이것을 재정의한다.
 	Destroy();
 }

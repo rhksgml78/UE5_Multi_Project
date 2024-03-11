@@ -33,6 +33,17 @@ class SKH_MULTISHOOTING_API APlayerHUD : public AHUD
 public:
 	// 드로우HUD 함수는 매프레임 호출되는 함수
 	virtual void DrawHUD() override;
+	
+	// 캐릭터의 위젯을 설정할 수 있는 변수(BP에서 지정 해줘야함)
+	UPROPERTY(EditAnywhere, Category = "Player State")
+	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+
+	// 플레이어 체력바
+	class UPlayerOverlay* PlayerOverlay;
+
+protected:
+	virtual void BeginPlay() override;
+	void AddCharacterOverlay();
 
 private:
 	FHUDPackage HUDPackage;

@@ -1,4 +1,24 @@
 #include "PlayerHUD.h"
+#include "GameFramework/PlayerController.h"
+#include "PlayerOverlay.h"
+
+void APlayerHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	AddCharacterOverlay();
+}
+
+void APlayerHUD::AddCharacterOverlay()
+{
+	// 위젯 생성시키기
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && CharacterOverlayClass)
+	{
+		PlayerOverlay = CreateWidget<UPlayerOverlay>(PlayerController, CharacterOverlayClass);
+		PlayerOverlay->AddToViewport();
+	}
+}
 
 void APlayerHUD::DrawHUD()
 {

@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleSystem.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 
 
 APlayerCharacter::APlayerCharacter()
@@ -70,6 +71,9 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// 특정 클라이언트(오너)만 복제된다.
 	DOREPLIFETIME_CONDITION(APlayerCharacter, OverlappingWeapon, COND_OwnerOnly);
 
+	// 모든 클라에 복제
+	DOREPLIFETIME(APlayerCharacter, Health);
+
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -115,7 +119,16 @@ void APlayerCharacter::PlayHitReactMontage()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// HUD 체력 업데이트
+	UpdateHudHealth();
+
+	// 데미지 콜백함수는 서버에서만 바인딩 할것
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
+
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -386,6 +399,23 @@ void APlayerCharacter::SimProxiesTurn()
 	TurningInplace = ETurningInPlace::ETIP_NotTurning;
 }
 
+void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	// 체력범위 제한하여 계산
+	Health = FMath::Clamp(Health-Damage,0.f,MaxHealth);
+	
+	// HUD 업데이트
+	UpdateHudHealth();
+
+	// 피격 모션 실행
+	PlayHitReactMontage();
+
+	// 출혈 이펙트 생성
+	if (BloodParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
+	}
+}
 
 void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 {
@@ -424,16 +454,6 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void APlayerCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-
-	if (BloodParticles)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
-	}
-}
-
 void APlayerCharacter::HideCameraIfCharacterClose()
 {
 	// 플레이하고있는 본인이 아니라면 반환
@@ -458,7 +478,32 @@ void APlayerCharacter::HideCameraIfCharacterClose()
 	}
 }
 
+void APlayerCharacter::OnRep_Health()
+{
+	// 모든 클라이언트 실행 함수
+	
+	// 체력업데이트
+	UpdateHudHealth();
 
+	// 피격모션 실행
+	PlayHitReactMontage();
+
+	// 출혈 파티클 실행
+	if (BloodParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
+	}
+}
+
+void APlayerCharacter::UpdateHudHealth()
+{
+	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+	if (FirstPlayerController)
+	{
+		FirstPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
 
 void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {

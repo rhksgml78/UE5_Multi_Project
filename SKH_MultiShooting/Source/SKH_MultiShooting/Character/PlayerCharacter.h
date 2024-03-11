@@ -26,10 +26,6 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
 
-	// 몽타주를 모든 클라이언트도 확인할 수 있도록 단, 피격 모션은 클라이언트간에 꼭 공유해야하는 중요한 것이 아니기 때문에 Unreliable 을 사용해도 ok
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
-
 	// 캐릭터의 움직임이 변할때마다 호출되는 함수(매프레임X)
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -58,6 +54,13 @@ protected:
 
 	// 심프록시 턴 함수
 	void SimProxiesTurn();
+
+	// 데미지 받을 콜백 함수 꼭 UFUNCTION매크로 사용
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
+	// HUD 체력 업데이트 함수
+	void UpdateHudHealth();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -120,6 +123,18 @@ private:
 	// 파티클 관련
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BloodParticles;
+
+	// 플레이어의 체력 관련
+	UPROPERTY(EditAnywhere, Category = "Player State")
+	float MaxHealth = 100.f; // 최대 체력치
+	
+	UPROPERTY(ReplicatedUsing = Onrep_Health, VisibleAnywhere, Category = "Player State")
+	float Health = 100.f; // 현재 체력치
+
+	UFUNCTION()
+	void OnRep_Health(); // 복제변수가사용될 함수
+
+	class AFirstPlayerController* FirstPlayerController;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
