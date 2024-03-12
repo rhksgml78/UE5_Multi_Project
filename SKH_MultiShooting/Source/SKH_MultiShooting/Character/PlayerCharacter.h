@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "SKH_MultiShooting/PlayerTypes/TurningInPlace.h"
 #include "SKH_MultiShooting/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
 
 #include "PlayerCharacter.generated.h"
 
@@ -155,6 +156,30 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float ElimDelay = 3.f;
 	
+	// 디졸브 이펙트 관련
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	void StartDissolve();
+
+	// 런타임중 변경할 인스턴스
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	TArray<UMaterialInstanceDynamic*> DynamicDissolveMaterialInstances;
+
+	// 머티리얼 인스턴스 BP에서 설정할 것
+	UPROPERTY(EditAnywhere, Category = Elim)
+	TArray<UMaterialInstance*> DissolveMaterialInstances;
+
+	//UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+	//UMaterialInstance* DissolveMaterialInstance;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

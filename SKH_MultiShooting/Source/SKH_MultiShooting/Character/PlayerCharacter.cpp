@@ -62,6 +62,8 @@ APlayerCharacter::APlayerCharacter()
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
 
+	// 타임라인 컴포넌트
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -198,6 +200,34 @@ void APlayerCharacter::MulticastElim_Implementation()
 	bElimmed = true;
 	PlayElimMontage();
 
+	// DissolveMaterialInstances 배열에 요소가 있다면
+	if (DissolveMaterialInstances.Num() > 0)
+	{
+		// DissolveMaterialInstances의 크기만큼 반복
+		for (int32 Index = 0; Index < DissolveMaterialInstances.Num(); ++Index)
+		{
+			// 현재 인덱스에 해당하는 MaterialInstance 가져오기
+			UMaterialInstance* MaterialInstance = DissolveMaterialInstances[Index];
+
+			// 동적 머티리얼 인스턴스 생성
+			UMaterialInstanceDynamic* DynamicInstance = UMaterialInstanceDynamic::Create(MaterialInstance, this);
+
+			if (DynamicInstance)
+			{
+				// 메쉬의 해당 인덱스 위치에 동적 머티리얼 인스턴스 설정
+				GetMesh()->SetMaterial(Index, DynamicInstance);
+
+				// 초기 값 세팅
+				DynamicInstance->SetScalarParameterValue(TEXT("Dissolve"), -1.f);
+				DynamicInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+
+				// DynamicDissolveMaterialInstances에 동적 인스턴스 추가
+				DynamicDissolveMaterialInstances.Add(DynamicInstance);
+			}
+		}
+	}
+	// 위작업이 끝난뒤 디졸브 실행
+	StartDissolve();
 }
 
 void APlayerCharacter::ElimTimerFinishied()
@@ -492,7 +522,6 @@ void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 
 void APlayerCharacter::TurnInPlace(float DeltaTime)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("AO_Yaw : %f"), AO_Yaw);
 	if (AO_Yaw > 90.f)
 	{
 		TurningInplace = ETurningInPlace::ETIP_Right;
@@ -562,6 +591,29 @@ void APlayerCharacter::UpdateHudHealth()
 	if (FirstPlayerController)
 	{
 		FirstPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void APlayerCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	for (auto* MaterialInstance : DynamicDissolveMaterialInstances)
+	{
+		if (MaterialInstance != nullptr) 
+		{
+			MaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), DissolveValue);
+		}
+	}
+}
+
+void APlayerCharacter::StartDissolve()
+{
+	// 타임라인에 동적 바인딩
+	DissolveTrack.BindDynamic(this, &ThisClass::UpdateDissolveMaterial);
+
+	if (DissolveCurve && DissolveTimeline)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
 	}
 }
 
