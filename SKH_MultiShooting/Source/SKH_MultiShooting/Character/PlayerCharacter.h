@@ -154,7 +154,7 @@ private:
 	void ElimTimerFinishied(); // 콜백용 함수
 
 	UPROPERTY(EditDefaultsOnly)
-	float ElimDelay = 3.f;
+	float ElimDelay = 5.f;
 	
 	// 디졸브 이펙트 관련
 	UPROPERTY(VisibleAnywhere)

@@ -83,6 +83,14 @@ void AWeapon::OnRep_WeaponState()
 	{
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	default:
 		break;
@@ -98,6 +106,20 @@ void AWeapon::SetWeaponState(EWeaponState State)
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		if (HasAuthority())
+		{
+			// 서버에서 작업할 것
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		break;
 	default:
 		break;
 	}
@@ -147,5 +169,17 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+
+	// 어태치 되어있는 무기를 월드상에 떨어뜨려두기
+	FDetachmentTransformRules DetechRules(EDetachmentRule::KeepWorld, true);
+	WeaponMesh->DetachFromComponent(DetechRules);
+
+	// 소유자 비우기
+	SetOwner(nullptr);
 }
 

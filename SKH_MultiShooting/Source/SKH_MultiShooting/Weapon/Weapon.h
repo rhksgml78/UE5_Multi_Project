@@ -31,6 +31,9 @@ public:
 	// 발사용 함수(재정의 할 수 있도록)
 	virtual void Fire(const FVector& HitTarget);
 
+	// 플레이어 사망시 무기 떨어뜰이기
+	void Dropped();
+
 	// 크로스헤어 그리기용 변수(벌어지는 애니메이션을 위해서 여러 부위로 나뉨)
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	class UTexture2D* CrosshairsCenter;

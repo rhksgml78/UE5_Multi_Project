@@ -184,6 +184,12 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 
 void APlayerCharacter::Elim()
 {
+	// 무기 떨어뜨리기
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	// 서버에서 각 클라이언트에게 멀티캐스트 함수 호출
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
@@ -228,6 +234,18 @@ void APlayerCharacter::MulticastElim_Implementation()
 	}
 	// 위작업이 끝난뒤 디졸브 실행
 	StartDissolve();
+
+	// 캐릭터의 움직임 제한 (이동 및 입력)
+	GetCharacterMovement()->DisableMovement(); 
+	GetCharacterMovement()->StopMovementImmediately();
+	if (FirstPlayerController)
+	{
+		DisableInput(FirstPlayerController);
+	}
+
+	// 콜리전 무효화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void APlayerCharacter::ElimTimerFinishied()

@@ -161,9 +161,16 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
-	// 클라이언트에서 아이템 장착시 정면으로 향하도록
 	if (EquippedWeapon && Character)
 	{
+		// 어태치 전에 무기의 상태를 확실히 변경한후에 어태치 시킬 수 있도록한다.
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (HandSocket)
+		{
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
+
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
