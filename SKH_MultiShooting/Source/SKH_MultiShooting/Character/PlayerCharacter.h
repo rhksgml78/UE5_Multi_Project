@@ -36,6 +36,7 @@ public:
 
 	// 사망시 탈락 처리할 함수
 	void Elim();
+
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 
@@ -71,6 +72,9 @@ protected:
 
 	// HUD 체력 업데이트 함수
 	void UpdateHudHealth();
+
+	// HUD와 관련된 것들을 초기화 하기위한 함수
+	void PollInit();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -133,20 +137,17 @@ private:
 	// 속도 관련
 	float CalculateSpeed();
 
-	// 파티클 관련
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* BloodParticles;
-
 	// 플레이어의 체력 관련
 	UPROPERTY(EditAnywhere, Category = "Player State")
 	float MaxHealth = 100.f; // 최대 체력치
 	
-	UPROPERTY(ReplicatedUsing = Onrep_Health, VisibleAnywhere, Category = "Player State")
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player State")
 	float Health = 100.f; // 현재 체력치
 
 	UFUNCTION()
 	void OnRep_Health(); // 복제변수가사용될 함수
 
+	UPROPERTY()
 	class AFirstPlayerController* FirstPlayerController;
 
 	// 캐릭터가 사망(탈락)헀는지 판단할 변수
@@ -194,6 +195,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
 
+	UPROPERTY()
+	class AFirstPlayerState* FirstPlayerState;
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -207,5 +211,6 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
-
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };

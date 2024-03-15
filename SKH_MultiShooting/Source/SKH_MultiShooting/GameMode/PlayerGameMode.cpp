@@ -3,9 +3,24 @@
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
+#include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 
 void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirstPlayerController* VictimController, AFirstPlayerController* AttackerController)
 {
+	AFirstPlayerState* AttackerPlayerState = AttackerController ? Cast<AFirstPlayerState>(AttackerController->PlayerState) : nullptr;
+
+	AFirstPlayerState* VictimPlayerState = VictimController ? Cast<AFirstPlayerState>(VictimController->PlayerState) : nullptr;
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	{
+		// 플레이어가 자살이아닌 다른 플레이어를 처치했을때 1점을 추가 시킨다.
+		AttackerPlayerState->AddToScore(1.f);
+	}
+
+	if (VictimPlayerState)
+	{
+		VictimPlayerState->AddToDefeats(1);
+	}
 	// 사망한 캐릭터와 사망시킨 캐릭터를 매개변수로 받고 사망한 캐릭터를 탈락 처리할 수 있도록
 
 	if (ElimmedCharacter)

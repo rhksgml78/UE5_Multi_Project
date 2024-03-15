@@ -13,11 +13,19 @@ class SKH_MULTISHOOTING_API AFirstPlayerController : public APlayerController
 
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDScore(float Score);
+	void SetHUDDefeats(int32 Defeats);
+	void PlayDefeatsAnimation();
+
+	// 플레이어 빙의시 바로 한번 업데이트
+	virtual void OnPossess(APawn* InPawn) override;
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+
+	UPROPERTY()
 	class APlayerHUD* PlayerHUD;
 	
 };

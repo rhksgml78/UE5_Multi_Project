@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -83,7 +84,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// 모든 클라에 복제
 	DOREPLIFETIME(APlayerCharacter, Health);
-
 }
 
 void APlayerCharacter::Destroyed()
@@ -186,6 +186,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	// 카메라 가려짐 보안
 	HideCameraIfCharacterClose();
+	
+	// 플레이어 스테이트를 한번 초기화한다.
+	PollInit();
 }
 
 void APlayerCharacter::OnRep_ReplicatedMovement()
@@ -279,6 +282,13 @@ void APlayerCharacter::MulticastElim_Implementation()
 			ElimBotSound,
 			GetActorLocation()
 		);
+	}
+	// Wasted 애니메이션 재생 여기서?
+	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+	if (FirstPlayerController)
+	{
+		FirstPlayerController->PlayDefeatsAnimation();
 	}
 }
 
@@ -536,12 +546,6 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	// 피격 모션 실행
 	PlayHitReactMontage();
 
-	// 출혈 이펙트 생성
-	if (BloodParticles)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
-	}
-
 	// 체력이 0이 되었을때
 	if (Health == 0.f)
 	{
@@ -628,12 +632,6 @@ void APlayerCharacter::OnRep_Health()
 
 	// 피격모션 실행
 	PlayHitReactMontage();
-
-	// 출혈 파티클 실행
-	if (BloodParticles)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BloodParticles, GetActorTransform());
-	}
 }
 
 void APlayerCharacter::UpdateHudHealth()
@@ -643,6 +641,19 @@ void APlayerCharacter::UpdateHudHealth()
 	if (FirstPlayerController)
 	{
 		FirstPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void APlayerCharacter::PollInit()
+{
+	if (FirstPlayerState == nullptr)
+	{
+		FirstPlayerState = GetPlayerState<AFirstPlayerState>();
+		if (FirstPlayerState)
+		{
+			FirstPlayerState->AddToScore(0.f);
+			FirstPlayerState->AddToDefeats(0);
+		}
 	}
 }
 

@@ -14,8 +14,6 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 		}
 	}
 
-
-
 	// 상속받은 히트 이벤트 에서 Destroy 가 실행되므로 나중에 실행시킨다.
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }

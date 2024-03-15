@@ -7,7 +7,6 @@
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundCue.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
-#include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/SKH_MultiShooting.h"
 
 AProjectile::AProjectile()
@@ -83,13 +82,6 @@ void AProjectile::Destroyed()
 	Super::Destroyed();
 	SpawnParticleEffects();
 
-}
-
-void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AProjectile, bHitPlayer);
 }
 
 void AProjectile::SpawnParticleEffects()

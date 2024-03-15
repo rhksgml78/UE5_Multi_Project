@@ -17,6 +17,16 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* HealthText;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ScoreAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* DefeatsAmount;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
+	void PlayDeafeats();
+	void PlayDeafeats_Implementation();
+
 protected:
 
 private:
