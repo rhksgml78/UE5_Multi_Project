@@ -17,7 +17,9 @@
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "SKH_MultiShooting/GameMode/PlayerGameMode.h"
 #include "TimerManager.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -81,6 +83,18 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// 모든 클라에 복제
 	DOREPLIFETIME(APlayerCharacter, Health);
+
+}
+
+void APlayerCharacter::Destroyed()
+{
+	// 해당함수는 AActor의 함수 재정의 이기때문에 모든 클라이언트에서 호출 되는 함수이다.
+	Super::Destroyed();
+
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
+	}
 
 }
 
@@ -246,6 +260,26 @@ void APlayerCharacter::MulticastElim_Implementation()
 	// 콜리전 무효화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Elim이펙트 실행
+	if (ElimBotEffect)
+	{
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 150.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnPoint,
+			GetActorRotation()
+			);
+	}
+	if (ElimBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			ElimBotSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void APlayerCharacter::ElimTimerFinishied()

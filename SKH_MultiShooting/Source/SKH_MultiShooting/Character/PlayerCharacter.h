@@ -21,6 +21,9 @@ public:
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 클라이언트 파괴용 함수
+	virtual void Destroyed() override;
+
 	virtual void PostInitializeComponents() override;
 
 	// 몽타주 재생
@@ -180,6 +183,16 @@ private:
 
 	//UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 	//UMaterialInstance* DissolveMaterialInstance;
+
+	// 플레이어 사망시 추가 이펙트 관련
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
