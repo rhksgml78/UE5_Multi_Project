@@ -21,6 +21,7 @@
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
+#include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -144,6 +145,26 @@ void APlayerCharacter::PlayElimMontage()
 	if (AnimInstance && ElimMontage)
 	{
 		AnimInstance->Montage_Play(ElimMontage);
+	}
+}
+
+void APlayerCharacter::PlayReLoadMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReLoadMontage)
+	{
+		AnimInstance->Montage_Play(ReLoadMontage);
+		FName SectionName;
+
+		switch (Combat->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		}
+		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
 
@@ -323,6 +344,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
+
 
 }
 
@@ -429,6 +452,14 @@ void APlayerCharacter::FireButtonReleased()
 		Combat->FireButtonPressed(false);
 	}
 
+}
+
+void APlayerCharacter::ReloadButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->Reload();
+	}
 }
 
 void APlayerCharacter::Jump()

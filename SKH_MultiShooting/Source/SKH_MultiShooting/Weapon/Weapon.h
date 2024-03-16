@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "WeaponTypes.h"
 
 #include "Weapon.generated.h"
 
@@ -14,6 +15,7 @@ enum class EWeaponState : uint8
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
+
 
 
 UCLASS()
@@ -137,13 +139,20 @@ private:
 	UPROPERTY()
 	class AFirstPlayerController* PlayerOwnerController;
 
+	// 무기의 타입을 지정
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
+
 public:	
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 
 	// 외부에서 접근할 탄창이 비어있는지 학인할 함수
 	bool IsEmpty();
+
+
 };

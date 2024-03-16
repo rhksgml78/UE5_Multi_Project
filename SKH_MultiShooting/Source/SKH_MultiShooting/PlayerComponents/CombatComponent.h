@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
+#include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 
 #include "CombatComponent.generated.h"
 
@@ -18,10 +19,11 @@ public:
 	UCombatComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void EquipWeapon(class AWeapon* WeaponToEquip);
-
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void Reload();
 
 protected:
 	virtual void BeginPlay() override;
@@ -50,6 +52,10 @@ protected:
 
 	// 크로스헤어 세팅
 	void SetHUDCrosshairs(float DeltaTime);
+
+	// 리로드 RPC
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
 
 
 private:
@@ -107,6 +113,20 @@ private:
 
 	bool CanFire(); // 탄약이있을때만 발사할 수 있도록
 
+	// 소지한탄창은 바로업데이트되어야하기때문에 컴포넌트 클래스에서 소지한다. 플레이어는 소유중인 무기의 모든 타입의 탄창갯수를 별도로 저장하지 않는다. 현재 장착중인 무기에 관해서만 값을 가진다.
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	// 무기의 타입에따라 소지하는 탄약의 갯수를 TMap으로 저장
+	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 30;
+
+	void InitializeCarriedAmmo();
 
 public:	
 	void SetMaxWalkSpeed(float Value);

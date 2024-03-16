@@ -25,6 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::BeginPlay()
@@ -41,7 +42,14 @@ void UCombatComponent::BeginPlay()
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
+		if (Character->HasAuthority())
+		{
+			// 탄창관련 초기화 (서버에서만)
+			InitializeCarriedAmmo();
+		}
 	}
+
+
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -161,9 +169,40 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetOwner(Character);
 	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
 	EquippedWeapon->SetHUDAmmo();
+
+	// CarriedAmmo 설정하기전에 무기의 타입 지정
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
 	// 아이템 장착시 정면으로 향하도록
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::Reload()
+{
+	// 소지한 탄약의 수가 0보다 클경우
+	if (CarriedAmmo > 0)
+	{
+		// 서버 실행 함수를 호출한다.
+		ServerReload();
+	}
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	// 서버에서 실행되는 로직
+	if (Character == nullptr) return;
+	
+	Character->PlayReLoadMontage();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -375,4 +414,19 @@ bool UCombatComponent::CanFire()
 	// 장착한무기의 탄약이 0보다작거나 같을때 true 반환후 false로만든조건이거나 발사할수 없을때때 true반환
 	return !EquippedWeapon->IsEmpty() || !bCanFire;
 
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	// 클라이언트 업데이트
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
 }

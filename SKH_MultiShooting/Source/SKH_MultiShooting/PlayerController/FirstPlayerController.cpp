@@ -96,6 +96,20 @@ void AFirstPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 	}
 }
 
+void AFirstPlayerController::SetHUDCarriedAmmo(int32 Ammo)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->CarriedAmmoAmount;
+
+	if (bHUDValid)
+	{
+		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+		PlayerHUD->PlayerOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
 void AFirstPlayerController::PlayDefeatsAnimation()
 {
 	bool bHUDValid = PlayerHUD &&
