@@ -23,6 +23,10 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* DefeatsAmount;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* WeaponAmmoAmount;
+	
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
 	void PlayDeafeats_Implementation();

@@ -77,7 +77,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if (bCanFire)
+	if (CanFire())
 	{
 		// 작동되자마자 한번만 발사되도록 점화식 변수를 바꾸어 주도록한다. 이후 발사가끝난시점에 다시 true변경해주기.
 		bCanFire = false;
@@ -144,6 +144,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 
+	// 만일 현재 장착중인 무기가있는데 다른 무기를 장착하려 할 경우 현재 들고있는 무길르 드랍시키고 새무기를 장착한다
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
+
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
@@ -153,7 +159,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 
 	EquippedWeapon->SetOwner(Character);
-
+	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
+	EquippedWeapon->SetHUDAmmo();
 	// 아이템 장착시 정면으로 향하도록
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
@@ -357,5 +364,15 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
+
+}
+
+bool UCombatComponent::CanFire()
+{
+	// 장착한 무기가 없다면 false 반환
+	if (EquippedWeapon == nullptr) return false;
+
+	// 장착한무기의 탄약이 0보다작거나 같을때 true 반환후 false로만든조건이거나 발사할수 없을때때 true반환
+	return !EquippedWeapon->IsEmpty() || !bCanFire;
 
 }

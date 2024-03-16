@@ -219,6 +219,12 @@ void APlayerCharacter::Elim()
 
 void APlayerCharacter::MulticastElim_Implementation()
 {
+	if (FirstPlayerController)
+	{
+		// 플레이어 사망시 무기가 드랍되기 떄문에 현재 AmmoHUD를 0으로 표기 되도록 한다.
+		FirstPlayerController->SetHUDWeaponAmmo(0);
+	}
+
 	// 탈락처리된 캐릭터를 사망처리하고 리스폰 시킬 수 있도록
 	bElimmed = true;
 	PlayElimMontage();

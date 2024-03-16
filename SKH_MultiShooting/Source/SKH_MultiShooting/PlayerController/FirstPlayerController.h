@@ -15,6 +15,7 @@ public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
+	void SetHUDWeaponAmmo(int32 Ammo);
 	void PlayDefeatsAnimation();
 
 	// 플레이어 빙의시 바로 한번 업데이트

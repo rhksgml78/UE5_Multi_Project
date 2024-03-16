@@ -28,6 +28,12 @@ public:
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 오너가 바뀔때 실행되는 함수 재정의 (AActor상속)
+	virtual void OnRep_Owner() override;
+
+	// Ammo HUD 세팅용 호출함수
+	void SetHUDAmmo();
+
 	// 발사용 함수(재정의 할 수 있도록)
 	virtual void Fire(const FVector& HitTarget);
 
@@ -113,6 +119,23 @@ private:
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
 
+	// 탄창 관련
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo;
+
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	void SpendRound();
+
+	UPROPERTY(EditAnywhere)
+	int32 MagCapacity;
+
+	UPROPERTY()
+	class APlayerCharacter* PlayerOwnerCharacter;
+
+	UPROPERTY()
+	class AFirstPlayerController* PlayerOwnerController;
 
 public:	
 	void SetWeaponState(EWeaponState State);
@@ -120,4 +143,7 @@ public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+
+	// 외부에서 접근할 탄창이 비어있는지 학인할 함수
+	bool IsEmpty();
 };

@@ -3,6 +3,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimationAsset.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -97,6 +98,53 @@ void AWeapon::OnRep_WeaponState()
 	}
 }
 
+void AWeapon::SetHUDAmmo()
+{
+	// 삼항연산으로 한번만 캐스팅하도록
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+
+	if (PlayerOwnerCharacter)
+	{
+		// 삼항연산으로 한번만 캐스팅하도록
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+
+		if (PlayerOwnerController)
+		{
+			PlayerOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void AWeapon::SpendRound()
+{
+	// 한번의 발사시 한개의  탄약을 소모시키고 플레이어의 HUD 업데이트 필요 (계산은 서버에서하고 서버도 업데이트) 이때 탄창은 최소 소지갯수 0개 ~ 최대소지갯수 를 벗어나지 않는다.
+	Ammo = FMath::Clamp(Ammo -1, 0, MagCapacity);
+	SetHUDAmmo();
+}
+
+void AWeapon::OnRep_Ammo()
+{
+	// 탄약이 소모 될경우 값복제 사용 (클라이언트는 값변경이 적용되었기 때문에 게산없이 바로 업데이트)
+	SetHUDAmmo();
+}
+
+void AWeapon::OnRep_Owner()
+{
+	// 오너가 변경되었을때 실행되는 복제함수
+	Super::OnRep_Owner();
+
+	if (Owner == nullptr)
+	{
+		// 플레이어와 컨트롤러도 비우기
+		PlayerOwnerCharacter = nullptr;
+		PlayerOwnerController = nullptr;
+	}
+	else
+	{
+		SetHUDAmmo();
+	}
+}
+
 void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
@@ -139,6 +187,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 
 	//#include "Net/UnrealNetwork.h" 포함 필요
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME(AWeapon, Ammo);
 
 }
 
@@ -169,6 +218,9 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+
+	// 총알 소모
+	SpendRound();
 }
 
 void AWeapon::Dropped()
@@ -181,5 +233,14 @@ void AWeapon::Dropped()
 
 	// 소유자 비우기
 	SetOwner(nullptr);
+
+	// 플레이어와 컨트롤러도 비우기
+	PlayerOwnerCharacter = nullptr;
+	PlayerOwnerController = nullptr;
+}
+
+bool AWeapon::IsEmpty()
+{
+	return Ammo <= 0;
 }
 

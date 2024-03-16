@@ -105,6 +105,8 @@ private:
 	void StartFireTimer(); // 시작함수
 	void FireTimerFinished(); // 콜백함수
 
+	bool CanFire(); // 탄약이있을때만 발사할 수 있도록
+
 
 public:	
 	void SetMaxWalkSpeed(float Value);
