@@ -25,6 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
@@ -133,7 +134,7 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr) return;
-	if (Character)
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
@@ -189,8 +190,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::Reload()
 {
-	// 소지한 탄약의 수가 0보다 클경우
-	if (CarriedAmmo > 0)
+	// 소지한 탄약의 수가 0보다 크고 플레이어가 리로드 상태가 아닐경우
+	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
 	{
 		// 서버 실행 함수를 호출한다.
 		ServerReload();
@@ -201,8 +202,51 @@ void UCombatComponent::ServerReload_Implementation()
 {
 	// 서버에서 실행되는 로직
 	if (Character == nullptr) return;
-	
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::FinishReloading()
+{
+	if (Character == nullptr)
+	{
+		return;
+	}
+	if (Character->HasAuthority())
+	{
+		// 서버에서 실행
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed)
+		{
+			Fire();
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+
+void UCombatComponent::HandleReload()
+{
 	Character->PlayReLoadMontage();
+
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -411,8 +455,7 @@ bool UCombatComponent::CanFire()
 	// 장착한 무기가 없다면 false 반환
 	if (EquippedWeapon == nullptr) return false;
 
-	// 장착한무기의 탄약이 0보다작거나 같을때 true 반환후 false로만든조건이거나 발사할수 없을때때 true반환
-	return !EquippedWeapon->IsEmpty() || !bCanFire;
+	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 
 }
 
@@ -430,3 +473,4 @@ void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
 }
+

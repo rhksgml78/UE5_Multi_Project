@@ -3,7 +3,7 @@
 #include "Components/ActorComponent.h"
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "SKH_MultiShooting/Weapon/WeaponTypes.h"
-
+#include "SKH_MultiShooting/PlayerTypes/CombatState.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 8000.f
@@ -24,6 +24,9 @@ public:
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	void Reload();
+	// 블루프린트 노티파이에서 실행할 함수
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
 protected:
 	virtual void BeginPlay() override;
@@ -57,6 +60,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 
+	void HandleReload(); // 서버 클라이언트 모두에서 실행
 
 private:
 	UPROPERTY()
@@ -127,6 +131,13 @@ private:
 	int32 StartingARAmmo = 30;
 
 	void InitializeCarriedAmmo();
+
+	// 플레이어의 상태를 지정하는 변수
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_CombatState();
 
 public:	
 	void SetMaxWalkSpeed(float Value);

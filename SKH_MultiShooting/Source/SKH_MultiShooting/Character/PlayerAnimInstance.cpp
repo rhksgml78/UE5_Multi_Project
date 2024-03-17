@@ -3,6 +3,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "SKH_MultiShooting/Weapon/Weapon.h"
+#include "SKH_MultiShooting/PlayerTypes/CombatState.h"
 
 void UPlayerAnimInstance::NativeInitializeAnimation()
 {
@@ -125,4 +126,7 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), PlayerCharacter->GetHitTarget(), FColor::Orange);
 		*/
 	}
+
+	// 플레이어가 리로드 상태가아니라면 ture 값이되어 FABRIK 기능을 사용한다. 반대로 플레이어가 재장전 중일때는 false 가되므로 FABRIK 기능을 OFF 시키도록 BP에서 지정.
+	bUseFABRIK = PlayerCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }
