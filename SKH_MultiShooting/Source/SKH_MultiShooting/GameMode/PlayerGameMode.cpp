@@ -5,6 +5,34 @@
 #include "GameFramework/PlayerStart.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 
+APlayerGameMode::APlayerGameMode()
+{
+	bDelayedStart = true; 
+}
+
+void APlayerGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	LevelStartingTime = GetWorld()->GetTimeSeconds();
+}
+
+void APlayerGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		// 게임실행 시간이 웜업타임 시간과의 차이가 0보다 작아질경우 게임상태를 StartMatch로 변경
+		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime < 0.f)
+		{
+			// MatchState::InProgress
+			StartMatch();
+		}
+	}
+}
+
 void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirstPlayerController* VictimController, AFirstPlayerController* AttackerController)
 {
 	AFirstPlayerState* AttackerPlayerState = AttackerController ? Cast<AFirstPlayerState>(AttackerController->PlayerState) : nullptr;
