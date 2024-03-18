@@ -62,6 +62,9 @@ protected:
 
 	void HandleReload(); // 서버 클라이언트 모두에서 실행
 
+	// 리로드때 재장전 할 수 있는 탄약갯수를 계산하는 함수
+	int32 AmountToReload();
+
 private:
 	UPROPERTY()
 	class APlayerCharacter* Character;
@@ -138,6 +141,9 @@ private:
 
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	// 리로드 끝나는 타이밍에 실행될 함수
+	void UpdateAmmoValues();
 
 public:	
 	void SetMaxWalkSpeed(float Value);

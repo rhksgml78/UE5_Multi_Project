@@ -18,16 +18,23 @@ public:
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void PlayDefeatsAnimation();
+	void SetHUDMatchCountdown(float CountdownTime);
 
 	// 플레이어 빙의시 바로 한번 업데이트
 	virtual void OnPossess(APawn* InPawn) override;
 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	virtual void BeginPlay() override;
+	void SetHUDTime();
 
 private:
 
 	UPROPERTY()
 	class APlayerHUD* PlayerHUD;
+
+	float MatchTime = 120.f;
+	uint32 CountDownInt = 0;
 	
 };

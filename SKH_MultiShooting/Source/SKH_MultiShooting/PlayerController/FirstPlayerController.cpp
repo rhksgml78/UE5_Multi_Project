@@ -8,9 +8,16 @@
 void AFirstPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	//PrimaryActorTick.bCanEverTick = true;
 
 	PlayerHUD = Cast<APlayerHUD>(GetHUD());
 
+}
+
+void AFirstPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	SetHUDTime();
 }
 
 void AFirstPlayerController::OnPossess(APawn* InPawn)
@@ -26,7 +33,6 @@ void AFirstPlayerController::OnPossess(APawn* InPawn)
 		SetHUDHealth(PlayerCharacter->GetHealth(), PlayerCharacter->GetMaxHealth());
 	}
 }
-
 
 void AFirstPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
@@ -119,4 +125,33 @@ void AFirstPlayerController::PlayDefeatsAnimation()
 		// 사망시 HUD 애니메이션 BP에서 플레이
 		PlayerHUD->PlayerOverlay->PlayDeafeats();
 	}
+}
+
+void AFirstPlayerController::SetHUDMatchCountdown(float CountdownTime)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->MatchCountdownText;
+
+	if (bHUDValid)
+	{
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - (Minutes * 60);
+
+		// 2자리수로 제한
+		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		PlayerHUD->PlayerOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void AFirstPlayerController::SetHUDTime()
+{
+	uint32 SecondLeft = FMath::CeilToInt(MatchTime - GetWorld()->GetTimeSeconds());
+	if (CountDownInt != SecondLeft)
+	{
+		SetHUDMatchCountdown(MatchTime - GetWorld()->GetTimeSeconds());
+	}
+	CountDownInt = SecondLeft;
 }

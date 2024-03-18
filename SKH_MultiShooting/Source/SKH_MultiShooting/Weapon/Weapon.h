@@ -42,6 +42,9 @@ public:
 	// 플레이어 사망시 무기 떨어뜰이기
 	void Dropped();
 
+	// 재장전후 탄약 갯수 늘리기
+	void AddAmmo(int32 AmmoToAdd);
+
 	// 크로스헤어 그리기용 변수(벌어지는 애니메이션을 위해서 여러 부위로 나뉨)
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	class UTexture2D* CrosshairsCenter;
@@ -64,6 +67,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bAutomatic = true; // 연사, 점사 무기 구분
+
+	// 플레이어가 무기 장착시 재생할 사운드
+	UPROPERTY(EditAnywhere)
+	class USoundCue* EquipSound;
 
 protected:
 	virtual void BeginPlay() override;
@@ -154,5 +161,8 @@ public:
 	// 외부에서 접근할 탄창이 비어있는지 학인할 함수
 	bool IsEmpty();
 
+	// 위부에서 탄약갯수를 얻을 수 있도록
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 
 };

@@ -10,7 +10,9 @@
 #include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
-//#include "SKH_MultiShooting/HUD/PlayerHUD.h"
+#include "Sound/SoundCue.h"
+#include "SKH_MultiShooting/HUD/PlayerHUD.h"
+#include "SKH_MultiShooting/HUD/PlayerOverlay.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -124,6 +126,11 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	// 타이머 종료시 총알이 없다면 재장전 호출
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -183,6 +190,22 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 
+	// 서버에서 사운드 재생
+	if (EquippedWeapon->EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this, 
+			EquippedWeapon->EquipSound, 
+			Character->GetActorLocation()
+		);
+	}
+
+	// 무기를 집자마자 탄창이 비어있다면
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
+
 	// 아이템 장착시 정면으로 향하도록
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
@@ -201,13 +224,15 @@ void UCombatComponent::Reload()
 void UCombatComponent::ServerReload_Implementation()
 {
 	// 서버에서 실행되는 로직
-	if (Character == nullptr) return;
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
 	CombatState = ECombatState::ECS_Reloading;
 	HandleReload();
 }
 
 void UCombatComponent::FinishReloading()
 {
+	// BP에서 호출되는 노티파이 연결 함수.
 	if (Character == nullptr)
 	{
 		return;
@@ -216,12 +241,35 @@ void UCombatComponent::FinishReloading()
 	{
 		// 서버에서 실행
 		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
 	}
 
 	if (bFireButtonPressed)
 	{
 		Fire();
 	}
+}
+
+void UCombatComponent::UpdateAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// 모든 플레이어의 탄약갯수는 서버에서 계산
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		// 여분탄약의 갯수에서 재장전할 만큼의 탄약을 감소시키고 대입한다.
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	EquippedWeapon->AddAmmo(-ReloadAmount);
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -242,11 +290,32 @@ void UCombatComponent::OnRep_CombatState()
 	}
 }
 
-
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReLoadMontage();
+}
 
+int32 UCombatComponent::AmountToReload()
+{
+	// 탄약의 갯수는 무기자체가들고 있기 때문에 웨폰 클래스에서 값을 가져 와야 함.
+	if (EquippedWeapon == nullptr) return 0;
+
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+
+	// 무기의 타입이 지정되어 있어야 정확한 탄약의 갯수를 계산
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		// 소지하고있는 탄약의 갯수 설정
+		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		// 최소의 갯수는 들고있을수있는 탄창에서 사용후 소모된양 혹은 소지중인(리로드할수있는)남은 탄약중 적은 쪽의 숫자로 지정
+		int32 Least = FMath::Min(RoomInMag, AmountCarried);
+
+		return FMath::Clamp(RoomInMag, 0, Least);
+
+	}
+
+	// 무기의 타입이 지정되어 있지 않다면 0을 반환
+	return 0;
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -263,6 +332,16 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+
+		// 클라이언트에서 사운드 재생
+		if (EquippedWeapon->EquipSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				EquippedWeapon->EquipSound,
+				Character->GetActorLocation()
+			);
+		}
 	}
 }
 

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 
 #include "PlayerOverlay.generated.h"
 
@@ -29,12 +30,17 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* CarriedAmmoAmount;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* MatchCountdownText;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
 	void PlayDeafeats_Implementation();
+
 
 protected:
 
 private:
 
 };
+
