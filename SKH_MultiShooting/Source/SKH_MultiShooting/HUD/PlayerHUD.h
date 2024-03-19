@@ -39,11 +39,23 @@ public:
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
 
 	// 플레이어 체력바
+	UPROPERTY()
 	class UPlayerOverlay* PlayerOverlay;
+
+	// 플레이어의 오버레이UI를 생성하는 함수
+	void AddCharacterOverlay();
+
+	// 대기실 오버레이
+	UPROPERTY(EditAnywhere, Category = "Player Announcement")
+	TSubclassOf<class UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	class UAnnouncement* Announcement;
+
+	void AddAnnouncement();
 
 protected:
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
 
 private:
 	FHUDPackage HUDPackage;

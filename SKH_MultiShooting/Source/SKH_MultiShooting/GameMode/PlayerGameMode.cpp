@@ -5,6 +5,12 @@
 #include "GameFramework/PlayerStart.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
+
 APlayerGameMode::APlayerGameMode()
 {
 	bDelayedStart = true; 
@@ -17,6 +23,22 @@ void APlayerGameMode::BeginPlay()
 	LevelStartingTime = GetWorld()->GetTimeSeconds();
 }
 
+void APlayerGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	// 모든 플레이어 컨트롤러를 확인하는 반복문
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AFirstPlayerController* PlayerController = Cast<AFirstPlayerController>(*It);
+		if (PlayerController)
+		{
+			// 상속받는 MatchState 변수
+			PlayerController->OnMatchStateSet(MatchState);
+		}
+	}
+}
+
 void APlayerGameMode::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -25,10 +47,18 @@ void APlayerGameMode::Tick(float DeltaTime)
 	{
 		// 게임실행 시간이 웜업타임 시간과의 차이가 0보다 작아질경우 게임상태를 StartMatch로 변경
 		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
-		if (CountdownTime < 0.f)
+		if (CountdownTime <= 0.f)
 		{
 			// MatchState::InProgress
 			StartMatch();
+		}
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
 		}
 	}
 }

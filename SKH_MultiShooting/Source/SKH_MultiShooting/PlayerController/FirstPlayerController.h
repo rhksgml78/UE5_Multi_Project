@@ -19,13 +19,37 @@ public:
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(float CountdownTime);
+	void SetHUDAnnouncementCountdown(float CountdownTime);
 
+	// 플레이어 사망시 재생할 애니메이션 호출 함수
 	void PlayDefeatsAnimation();
+
+	// 복제용 함수
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 플레이어 빙의시 바로 한번 업데이트
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual void Tick(float DeltaTime) override;
+
+	// 서버의 동기화된 시간을 얻는 가상함수
+	virtual float GetServerTime();
+
+	// 빠른 동기화를 위한 함수
+	virtual void ReceivedPlayer() override;
+
+	// 게임의 매치 상태 관련
+	void OnMatchStateSet(FName State);
+	void HandleMatchHasStarted();
+
+	// 게임이 종료시간이 되었을때 쿨다운상태에서 실행
+	void HandleCooldown();
+
+
+protected:
+	virtual void BeginPlay() override;
+	void SetHUDTime();
+	void PollInit();
 
 	/*
 	*서버와 클라이언트의 시간차이 동기화
@@ -39,14 +63,7 @@ public:
 	void ClientReportServerTime(float TimeOfClientRequest, float TimeServerReceivedClientRequest);
 
 	// 클라이언트와 서버간의 차이시간을 저장할 멤버 변수
-	float ClientServerDelta = 0.f; 
-
-	// 서버의 동기화된 시간을 얻는 가상함수
-	virtual float GetServerTime();
-
-	// 빠른 동기화를 위한 함수
-	virtual void ReceivedPlayer() override;
-
+	float ClientServerDelta = 0.f;
 	// 동기화를 얼마나 자주시킬지의 변수
 	UPROPERTY(EditAnywhere, Category = Time)
 	float TimeSyncFrequency = 5.f;
@@ -56,17 +73,42 @@ public:
 	// 동기화 시간 체크
 	void CheckTimeSync(float DeltaTime);
 
-protected:
-	virtual void BeginPlay() override;
-	void SetHUDTime();
+	// 서버의 매치상태를 확인하는 함수
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
 
+	// 클라이언트가 중간난입 했을때
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
 private:
 
 	UPROPERTY()
 	class APlayerHUD* PlayerHUD;
 
-	float MatchTime = 600.f;
+	UPROPERTY()
+	class APlayerGameMode* PlayerGameMode;
+
+	float LevelStartingTime = 0.f;
+	float MatchTime = 0.f;
+	float WarmupTime = 0.f;
+	float CooldownTime = 0.f;
 	uint32 CountDownInt = 0;
-	
+
+	// 게임의 매치 상태를 확인하기위한 변수 서버와 클라이언트 모두가 알고 있으야하므로 복사 변수로 만든다
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	UPROPERTY()
+	class UPlayerOverlay* PlayerOverlay;
+
+	// 플레이어의 HUD 초기값을 설정할 변수들
+	bool bInitializePlayerOverlay = false;
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	float HUDDefeats;
 };

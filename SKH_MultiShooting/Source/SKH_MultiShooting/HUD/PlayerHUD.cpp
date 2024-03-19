@@ -1,11 +1,11 @@
 #include "PlayerHUD.h"
 #include "GameFramework/PlayerController.h"
 #include "PlayerOverlay.h"
+#include "Announcement.h"
 
 void APlayerHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	AddCharacterOverlay();
 }
 
 void APlayerHUD::AddCharacterOverlay()
@@ -17,6 +17,18 @@ void APlayerHUD::AddCharacterOverlay()
 	{
 		PlayerOverlay = CreateWidget<UPlayerOverlay>(PlayerController, CharacterOverlayClass);
 		PlayerOverlay->AddToViewport();
+	}
+}
+
+void APlayerHUD::AddAnnouncement()
+{
+	// 위젯 생성시키기
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && AnnouncementClass)
+	{
+		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
 
