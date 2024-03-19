@@ -49,16 +49,26 @@ void APlayerGameMode::Tick(float DeltaTime)
 		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
 		if (CountdownTime <= 0.f)
 		{
-			// MatchState::InProgress
+			// MatchState::InProgress 로 변경실행
 			StartMatch();
 		}
 	}
 	else if (MatchState == MatchState::InProgress)
 	{
+		// 대기시간+게임시간+프로그램실행시작시간에서 프로그램의 가동시간을 계속 빼주고 이때 카운트다운시간이 0이 될때 게임의 종료 즉,Cooldown 상태로 매치를 변경한다.
 		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
 		if (CountdownTime <= 0.f)
 		{
 			SetMatchState(MatchState::Cooldown);
+		}
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		// 게임이 종료후 Cooldown 매치 상태에서 지정한 시간이 지나 카운트다운이 0이될때 모든플레이어는 RestartGame 즉, 현재 게임을 플레이중인 레벨을 전부 다시 로드한다. 모든플레이어 객체를 파괴하고 다시생성. 초기값으로 다시세팅됨
+		CountdownTime = CooldownTime + WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			RestartGame();
 		}
 	}
 }

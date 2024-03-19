@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/GameMode/PlayerGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
 
 void AFirstPlayerController::BeginPlay()
 {
@@ -429,5 +430,14 @@ void AFirstPlayerController::HandleCooldown()
 			PlayerHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
 			PlayerHUD->Announcement->InfoText->SetText(FText::FromString(InfomationText));
 		}
+	}
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+	if (PlayerCharacter && PlayerCharacter->GetCombat())
+	{
+		// 플래이어 캐릭터의 입력이 불가능하게 하는 변수 지정
+		PlayerCharacter->bDisableGameplay = true;
+
+		// 캐릭터가 발사하고 있는동안 쿨다운 상태가 될경우 총알이 다 떨어질때까지 발사한채로 있게되므로 컴포넌트에 접근하여 발사를 중단 시킨다.
+		PlayerCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }

@@ -78,13 +78,13 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	OverlappingWeapon의 값이 변경될떄(무기가바뀔때) 갱신(복제)된다.
 	즉, 매프레임 매업데이트마다 변경값을 계속 업데이트하지않는것이다.
 	*/
-	// 모든 클라이언트에 복제된다.
-	//DOREPLIFETIME(APlayerCharacter, OverlappingWeapon);
+
 	// 특정 클라이언트(오너)만 복제된다.
 	DOREPLIFETIME_CONDITION(APlayerCharacter, OverlappingWeapon, COND_OwnerOnly);
 
 	// 모든 클라에 복제
 	DOREPLIFETIME(APlayerCharacter, Health);
+	DOREPLIFETIME(APlayerCharacter, bDisableGameplay);
 }
 
 void APlayerCharacter::Destroyed()
@@ -95,6 +95,10 @@ void APlayerCharacter::Destroyed()
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
+	}
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
 	}
 
 }
@@ -187,6 +191,25 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	RotateInPlace(DeltaTime);
+
+	// 카메라 가려짐 보안
+	HideCameraIfCharacterClose();
+	
+	// 플레이어 스테이트를 한번 초기화한다.
+	PollInit();
+}
+
+void APlayerCharacter::RotateInPlace(float DeltaTime)
+{
+	// 입력이 제한될 경우 변수 설정
+	if (bDisableGameplay) 
+	{
+		bUseControllerRotationYaw = false;
+		TurningInplace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
 	// 로컬룰의 기준에따라 캐릭터가 회전하는 것을 다르게
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
@@ -204,12 +227,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 		CalculateAO_Pitch();
 	}
-
-	// 카메라 가려짐 보안
-	HideCameraIfCharacterClose();
-	
-	// 플레이어 스테이트를 한번 초기화한다.
-	PollInit();
 }
 
 void APlayerCharacter::OnRep_ReplicatedMovement()
@@ -278,14 +295,13 @@ void APlayerCharacter::MulticastElim_Implementation()
 	}
 	// 위작업이 끝난뒤 디졸브 실행
 	StartDissolve();
+	
+	// 플레이어의 입력 방지
+	bDisableGameplay = true;
 
 	// 캐릭터의 움직임 제한 (이동 및 입력)
-	GetCharacterMovement()->DisableMovement(); 
-	GetCharacterMovement()->StopMovementImmediately();
-	if (FirstPlayerController)
-	{
-		DisableInput(FirstPlayerController);
-	}
+	//GetCharacterMovement()->DisableMovement(); 
+	//GetCharacterMovement()->StopMovementImmediately();
 
 	// 콜리전 무효화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -351,6 +367,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr && Value != 0.0f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -363,6 +381,8 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr && Value != 0.0f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -386,6 +406,8 @@ void APlayerCharacter::LookUp(float Value)
 // 서버에서 호출
 void APlayerCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		if (HasAuthority())
@@ -410,6 +432,8 @@ void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 
 void APlayerCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -422,6 +446,8 @@ void APlayerCharacter::CrouchButtonPressed()
 
 void APlayerCharacter::AimButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->SetAiming(true);
@@ -430,6 +456,8 @@ void APlayerCharacter::AimButtonPressed()
 
 void APlayerCharacter::AimButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->SetAiming(false);
@@ -438,6 +466,8 @@ void APlayerCharacter::AimButtonReleased()
 
 void APlayerCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->FireButtonPressed(true);
@@ -447,6 +477,8 @@ void APlayerCharacter::FireButtonPressed()
 
 void APlayerCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
@@ -456,6 +488,8 @@ void APlayerCharacter::FireButtonReleased()
 
 void APlayerCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->Reload();
@@ -464,6 +498,8 @@ void APlayerCharacter::ReloadButtonPressed()
 
 void APlayerCharacter::Jump()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
