@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
+#include "SKH_MultiShooting/GameState/PlayerGameState.h"
 
 namespace MatchState
 {
@@ -79,10 +80,15 @@ void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirs
 
 	AFirstPlayerState* VictimPlayerState = VictimController ? Cast<AFirstPlayerState>(VictimController->PlayerState) : nullptr;
 
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	APlayerGameState* PlayerGameState = GetGameState<APlayerGameState>();
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && PlayerGameState)
 	{
 		// 플레이어가 자살이아닌 다른 플레이어를 처치했을때 1점을 추가 시킨다.
 		AttackerPlayerState->AddToScore(1.f);
+
+		// 최대득점 갱신(해당플레이어를 탈락시긴 플레이어)
+		PlayerGameState->UpdateTopScore(AttackerPlayerState);
 	}
 
 	if (VictimPlayerState)

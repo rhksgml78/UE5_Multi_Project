@@ -96,8 +96,13 @@ void APlayerCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
-	if (Combat && Combat->EquippedWeapon)
+
+	APlayerGameMode* PlayerGameMode = Cast<APlayerGameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNotInProgress = PlayerGameMode && PlayerGameMode->GetMatchState() != MatchState::InProgress;
+
+	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress)
 	{
+		// 게임이 진행중이아닐떄 즉, 종료되었을시점이라면 들고있던 무기를 드랍하지않고 파괴한다.
 		Combat->EquippedWeapon->Destroy();
 	}
 
@@ -295,6 +300,11 @@ void APlayerCharacter::MulticastElim_Implementation()
 	}
 	// 위작업이 끝난뒤 디졸브 실행
 	StartDissolve();
+
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
 	
 	// 플레이어의 입력 방지
 	bDisableGameplay = true;

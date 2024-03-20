@@ -9,6 +9,8 @@
 #include "SKH_MultiShooting/GameMode/PlayerGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
+#include "SKH_MultiShooting/GameState/PlayerGameState.h"
+#include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 
 void AFirstPlayerController::BeginPlay()
 {
@@ -425,10 +427,50 @@ void AFirstPlayerController::HandleCooldown()
 			PlayerHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 
 			FString AnnouncementText("NEWGAME LOADING");
-			FString InfomationText("BEST PLAYER");
 
 			PlayerHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-			PlayerHUD->Announcement->InfoText->SetText(FText::FromString(InfomationText));
+
+			APlayerGameState* PlayerGameState = Cast<APlayerGameState>(UGameplayStatics::GetGameState(this));
+
+			AFirstPlayerState* FirstPlayerState = GetPlayerState<AFirstPlayerState>();
+
+			if (PlayerGameState && FirstPlayerState)
+			{
+				TArray<AFirstPlayerState*> TopPlayers = PlayerGameState->TopScoringPlayers;
+
+				FString InfoTextString;
+
+				if (TopPlayers.Num() == 0)
+				{
+					// 최다 득점자가 없을경우 (게임시작후 그누구도 플레이어를 죽이지 않을경우)
+					InfoTextString = FString("No Winner.");
+				}
+				else if (TopPlayers.Num() == 1 && TopPlayers[0] == FirstPlayerState)
+				{
+					// 현재 플레이중인 플레이어가 최다득점자일 경우 현재 플레이어에게 위너임을 표시함
+					InfoTextString = FString("You Win!");
+				}
+				else if (TopPlayers.Num() == 1)
+				{
+					// 현재플레이어가아닌 다른 누군가의 플레이어가 최다 득점을 단독으로 승리하였을경우 해당 플레이어의 이름을 출력한다.
+					InfoTextString = FString::Printf(TEXT("Winner\n%s"), *TopPlayers[0]->GetPlayerName());
+
+				}
+				else if (TopPlayers.Num() > 1)
+				{
+					// 최다득점이 여러명일 경우
+					InfoTextString = FString("TopScores\n");
+
+					for (auto TiedPlayer : TopPlayers)
+					{
+						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+					}
+				}
+
+				// UI의 INFO참에 출력되는 텍스트 편집
+				PlayerHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
+
+			}
 		}
 	}
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
