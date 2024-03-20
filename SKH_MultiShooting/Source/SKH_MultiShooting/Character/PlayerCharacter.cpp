@@ -308,6 +308,7 @@ void APlayerCharacter::MulticastElim_Implementation()
 	
 	// 플레이어의 입력 방지
 	bDisableGameplay = true;
+	GetCharacterMovement()->DisableMovement();
 
 	// 캐릭터의 움직임 제한 (이동 및 입력)
 	//GetCharacterMovement()->DisableMovement(); 

@@ -133,6 +133,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
 
+	UPROPERTY(EditAnywhere)
+	int32 StartingRocketAmmo = 4;
+
 	void InitializeCarriedAmmo();
 
 	// 플레이어의 상태를 지정하는 변수
