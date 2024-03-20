@@ -399,10 +399,7 @@ void AFirstPlayerController::HandleMatchHasStarted()
 	if (PlayerHUD)
 	{
 		// 플레이어의 UI생성하기
-		if (PlayerHUD->PlayerOverlay == nullptr)
-		{
-			PlayerHUD->AddCharacterOverlay();
-		}
+		PlayerHUD->AddCharacterOverlay();
 		if (PlayerHUD->Announcement)
 		{
 			// 대기중 안내 위젯은 숨기기
