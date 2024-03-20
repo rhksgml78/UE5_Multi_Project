@@ -30,12 +30,12 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* StaticMeshComponent;
+
 private:
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
-
-	UPROPERTY(EditAnywhere)
-	class UStaticMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;

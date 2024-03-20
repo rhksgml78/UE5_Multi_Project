@@ -301,17 +301,14 @@ void APlayerCharacter::MulticastElim_Implementation()
 	// 위작업이 끝난뒤 디졸브 실행
 	StartDissolve();
 
+	// 플레이어의 입력 방지
+	bDisableGameplay = true;
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
 	}
-	
-	// 플레이어의 입력 방지
-	bDisableGameplay = true;
-
-	// 캐릭터의 움직임 제한 (이동 및 입력)
-	//GetCharacterMovement()->DisableMovement(); 
-	//GetCharacterMovement()->StopMovementImmediately();
+	// 사망시 콜리전이 사라지고 맵아래로 추락하는것 방지
+	GetCharacterMovement()->DisableMovement();
 
 	// 콜리전 무효화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
