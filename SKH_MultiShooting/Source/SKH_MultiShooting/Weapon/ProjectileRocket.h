@@ -15,7 +15,12 @@ public:
 	AProjectileRocket();
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+
+	// 나이아가라 이펙트
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* TrailSystem;
 
 private:
 
