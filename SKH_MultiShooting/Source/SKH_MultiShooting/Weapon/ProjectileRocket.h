@@ -41,8 +41,8 @@ protected:
 	class USoundAttenuation* LoopingSoundAttenuation;
 
 	// 로켓은 다른 총알과다른 커스텀 무브먼트를 사용
-	UPROPERTY(VisibleAnywhere)
-	class URocketMovementComponent* RocketMovementComponent;
+	//UPROPERTY(VisibleAnywhere)
+	//class URocketMovementComponent* RocketMovementComponent;
 
 private:
 

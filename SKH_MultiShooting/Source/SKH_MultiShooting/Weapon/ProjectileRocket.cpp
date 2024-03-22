@@ -5,16 +5,16 @@
 #include "Sound/SoundCue.h"
 #include "Components/BoxComponent.h"
 #include "Components/AudioComponent.h"
-#include "RocketMovementComponent.h"
+//#include "RocketMovementComponent.h"
 
 
 AProjectileRocket::AProjectileRocket()
 {
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
-	RocketMovementComponent->bRotationFollowsVelocity = true;
-	RocketMovementComponent->SetIsReplicated(true);
+	//RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
+	//RocketMovementComponent->bRotationFollowsVelocity = true;
+	//RocketMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectileRocket::Destroyed()

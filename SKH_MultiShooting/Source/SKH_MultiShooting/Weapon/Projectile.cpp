@@ -7,6 +7,7 @@
 #include "Sound/SoundCue.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
 #include "SKH_MultiShooting/SKH_MultiShooting.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -34,6 +35,10 @@ AProjectile::AProjectile()
 	StaticMeshComponent->SetupAttachment(RootComponent);
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->SetIsReplicated(true);
+
 }
 
 void AProjectile::BeginPlay()
@@ -57,6 +62,9 @@ void AProjectile::BeginPlay()
 	{
 		// 충돌박스의 피격 이벤트에 바인딩
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+
+		// 충돌박스가 움직이기시작할때 오너와의 충돌처리를 예외처리 할 수 있다. 때문에 로켓런처의 커스텀무브먼트 사용안해도 괜찮음.
+		CollisionBox->IgnoreActorWhenMoving(Owner, true);
 	}
 }
 
