@@ -4,9 +4,8 @@
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 #include "SKH_MultiShooting/PlayerTypes/CombatState.h"
-#include "CombatComponent.generated.h"
 
-#define TRACE_LENGTH 8000.f
+#include "CombatComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SKH_MULTISHOOTING_API UCombatComponent : public UActorComponent
@@ -141,6 +140,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingSMGAmmo = 40;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingShotgunAmmo = 6;
 
 	void InitializeCarriedAmmo();
 

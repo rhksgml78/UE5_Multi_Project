@@ -15,6 +15,10 @@ public:
 	// 발사용 함수
 	virtual void Fire(const FVector& HitTarget) override;
 
+protected:
+	// 원형 착탄범위 계산
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -34,5 +38,17 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* HitSound;
+
+	/*
+	탄퍼짐 트레이스
+	*/
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DistanceToSphere = 800.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float SphereRadius = 75.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
 
 };

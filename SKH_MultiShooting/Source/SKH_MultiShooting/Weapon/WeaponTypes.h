@@ -1,5 +1,7 @@
 #pragma once
 
+#define TRACE_LENGTH 8000.f
+
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
@@ -7,6 +9,7 @@ enum class EWeaponType : uint8
 	EWT_RocketLauncher UMETA(DisplayName = "Rocket Launcher"),
 	EWT_Pistol UMETA(DisplayName = "Pistol"),
 	EWT_SubmachinGun UMETA(DisplayName = "Submachin Gun"),
+	EWT_ShotGun UMETA(DisplayName = "Shot Gun"),
 
 	EWT_MAX UMETA(DisplayName = "DefaultMAX")
 };
