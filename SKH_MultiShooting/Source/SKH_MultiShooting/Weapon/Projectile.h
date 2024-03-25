@@ -22,9 +22,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 타이머 세팅 함수
+	void StartDestroyTimer();
+
+	// 타이머 콜백 함수
+	void DestroyTimerFinished();
+
 	// 피격이벤트(바인딩해야함)
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	// 트레일(나이아가라이펙트)생성
+	void SpanwTrailSystem();
+
+	// 범위 공격
+	void ExplodeDamage();
 
 	// 데미지 관련
 	UPROPERTY(EditAnywhere)
@@ -46,6 +58,21 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
+	// 나이아가라 이펙트
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* TrailSystem;
+
+	// 나이아카라 이펙트를 컨트롤할 컴포넌트
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
+
+	// 범위 공격에 관련된 변수
+	UPROPERTY(EditAnywhere)
+	float DamageInnerRadius = 200.f;
+
+	UPROPERTY(EditAnywhere)
+	float DamageOuterRadius = 500.f;
+
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -53,6 +80,11 @@ private:
 
 	UPROPERTY()
 	class UParticleSystemComponent* TracerComponent;
+
+	FTimerHandle DestroyTimer;
+
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
 
 public:	
 	// 파티클 재생 함수

@@ -1,6 +1,5 @@
 #include "ProjectileRocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Sound/SoundCue.h"
 #include "Components/BoxComponent.h"
@@ -34,19 +33,7 @@ void AProjectileRocket::BeginPlay()
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
 	}
 
-	if (TrailSystem)
-	{
-		// 컴포넌트에 연결
-		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			TrailSystem,
-			GetRootComponent(),
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false
-		);
-	}
+	SpanwTrailSystem();
 
 	if (ProjectileLoop && LoopingSoundAttenuation)
 	{
@@ -75,38 +62,12 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	{
 		return;
 	}
-	APawn* FiringPawn = GetInstigator();
 
-	if (FiringPawn && HasAuthority())
-	{
-		// 피해계산은 서버에서만 진행한다.
+	// 범위공격을 실행
+	ExplodeDamage();
 
-		AController* FiringController = FiringPawn->GetController();
-		if (FiringController)
-		{
-			UGameplayStatics::ApplyRadialDamageWithFalloff(
-				this, // 월드상에 위치한 오브젝트
-				Damage, // 기본 데미지
-				10.f, // 최소 데미지
-				GetActorLocation(), // 생성위치
-				200.f, // 최소 범위
-				500.f, // 최대 범위
-				1.f, // 데미지 Falloff
-				UDamageType::StaticClass(), // 데미지타입클래스
-				TArray<AActor*>(), // 예외처리(Empty/없음)
-				this, // 데미지 커서(원인)
-				FiringController // 소유주의 컨트롤러
-			);
-		}
-	}
-
-	// 부모 클래스(Projectile)에서 Destroy때 사운드와 피격파티클을 생성하지만 트레일이펙트를 좀더 남겨두기위해서 타이멀르 사용하여 별도로 파괴한다.
-	GetWorldTimerManager().SetTimer(
-		DestroyTimer,
-		this,
-		&ThisClass::DestroyTimerFinished,
-		DestroyTime
-	);
+	// 파괴 타이머 설정
+	StartDestroyTimer();
 	
 	// 파티클과 사운드를 출력시킨다.
 	if (ImpactParticles)
@@ -143,9 +104,4 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	{
 		ProjectileLoopComponent->Stop();
 	}
-}
-
-void AProjectileRocket::DestroyTimerFinished()
-{
-	Destroy();
 }

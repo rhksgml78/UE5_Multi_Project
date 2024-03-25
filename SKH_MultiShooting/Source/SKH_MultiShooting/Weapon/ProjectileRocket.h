@@ -19,17 +19,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 
-	// 타이버 콜백 함수
-	void DestroyTimerFinished();
-
-	// 나이아가라 이펙트
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* TrailSystem;
-
-	// 나이아카라 이펙트를 컨트롤할 컴포넌트
-	UPROPERTY()
-	class UNiagaraComponent* TrailSystemComponent;
-
 	// 사운드 관련
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ProjectileLoop;
@@ -45,10 +34,5 @@ protected:
 	//class URocketMovementComponent* RocketMovementComponent;
 
 private:
-
-	FTimerHandle DestroyTimer;
-
-	UPROPERTY(EditAnywhere)
-	float DestroyTime = 3.f;
 
 };

@@ -8,6 +8,8 @@
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
 #include "SKH_MultiShooting/SKH_MultiShooting.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -80,12 +82,72 @@ void AProjectile::Tick(float DeltaTime)
 
 }
 
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&ThisClass::DestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
 void AProjectile::Destroyed()
 {
 	// Destroyed 함수는 클라이언트에서도 호출되도록 구현 되어져 있다. 때문에 클라이언트에서 도 아래의 기능들이 호출 될 것이다.
 	Super::Destroyed();
 	SpawnParticleEffects();
 
+}
+
+void AProjectile::SpanwTrailSystem()
+{
+	if (TrailSystem)
+	{
+		// 컴포넌트에 연결
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+}
+
+void AProjectile::ExplodeDamage()
+{
+	APawn* FiringPawn = GetInstigator();
+
+	if (FiringPawn && HasAuthority())
+	{
+		// 피해계산은 서버에서만 진행한다.
+
+		AController* FiringController = FiringPawn->GetController();
+		if (FiringController)
+		{
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this, // 월드상에 위치한 오브젝트
+				Damage, // 기본 데미지
+				10.f, // 최소 데미지
+				GetActorLocation(), // 생성위치
+				DamageInnerRadius, // 최소 범위
+				DamageOuterRadius, // 최대 범위
+				1.f, // 데미지 Falloff
+				UDamageType::StaticClass(), // 데미지타입클래스
+				TArray<AActor*>(), // 예외처리(Empty/없음)
+				this, // 데미지 커서(원인)
+				FiringController // 소유주의 컨트롤러
+			);
+		}
+	}
 }
 
 void AProjectile::SpawnParticleEffects()
