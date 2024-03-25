@@ -187,6 +187,9 @@ void APlayerCharacter::PlayReLoadMontage()
 		case EWeaponType::EWT_SniperRifle:
 			SectionName = FName("Rifle");
 			break;
+		case EWeaponType::EWT_GrenadeLauncher:
+			SectionName = FName("Rifle");
+			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
@@ -354,6 +357,17 @@ void APlayerCharacter::MulticastElim_Implementation()
 	if (FirstPlayerController)
 	{
 		FirstPlayerController->PlayDefeatsAnimation();
+	}
+
+	// 만일 스나이퍼줌이 켜진상태로 사망했을경우 스코프 위젯을 없애야한다.
+	bool bHideSniperScope = IsLocallyControlled() &&
+		Combat && 
+		Combat->bAiming &&
+		Combat->EquippedWeapon &&
+		Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
+	if (bHideSniperScope)
+	{
+		ShowSniperScopeWidget(false);
 	}
 }
 

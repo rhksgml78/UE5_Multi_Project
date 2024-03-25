@@ -46,6 +46,10 @@ public:
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
 
+	// 스코프 줌인 애니메이션 재생을 위한 변수
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
+
 protected:
 	virtual void BeginPlay() override;
 
