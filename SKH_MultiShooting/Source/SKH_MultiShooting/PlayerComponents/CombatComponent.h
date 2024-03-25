@@ -142,7 +142,7 @@ private:
 	int32 StartingSMGAmmo = 40;
 
 	UPROPERTY(EditAnywhere)
-	int32 StartingShotgunAmmo = 6;
+	int32 StartingShotgunAmmo = 4;
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingSniperAmmo = 12;
