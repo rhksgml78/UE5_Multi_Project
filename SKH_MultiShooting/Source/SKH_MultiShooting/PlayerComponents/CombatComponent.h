@@ -29,6 +29,12 @@ public:
 
 	void FireButtonPressed(bool bPressed);
 
+	// 샷건, 유탄발사기용 Shell 노티파이 연계 함수
+	UFUNCTION(BlueprintCallable)
+	void ShotgunShellReload();
+
+	void JumpToShotgunEnd();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -133,7 +139,7 @@ private:
 	int32 StartingARAmmo = 30;
 
 	UPROPERTY(EditAnywhere)
-	int32 StartingRocketAmmo = 4;
+	int32 StartingRocketAmmo = 1;
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingPistolAmmo = 4;
@@ -161,6 +167,9 @@ private:
 
 	// 리로드 끝나는 타이밍에 실행될 함수
 	void UpdateAmmoValues();
+
+	// 샷건 장탄
+	void UpdateShotgunAmmoValues();
 
 public:	
 	void SetMaxWalkSpeed(float Value);

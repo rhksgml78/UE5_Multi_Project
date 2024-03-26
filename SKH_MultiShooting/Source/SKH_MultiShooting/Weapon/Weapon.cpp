@@ -9,6 +9,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
 
 AWeapon::AWeapon()
 {
@@ -136,6 +137,15 @@ void AWeapon::SpendRound()
 void AWeapon::OnRep_Ammo()
 {
 	// 탄약이 소모 될경우 값복제 사용 (클라이언트는 값변경이 적용되었기 때문에 게산없이 바로 업데이트)
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && 
+		PlayerOwnerCharacter->GetCombat() && 
+		IsFull())
+	{
+		// 탄창의 갯수가 복제될경우 클라이언트에서도 샷건의 애니메이션섹션을 넘기고 재생시켜야 한다.
+		PlayerOwnerCharacter->GetCombat()->JumpToShotgunEnd();
+	}
+
 	SetHUDAmmo();
 }
 
@@ -269,5 +279,10 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 bool AWeapon::IsEmpty()
 {
 	return Ammo <= 0;
+}
+
+bool AWeapon::IsFull()
+{
+	return Ammo == MagCapacity;
 }
 

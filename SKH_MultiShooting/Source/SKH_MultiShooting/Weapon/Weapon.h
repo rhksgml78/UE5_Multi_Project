@@ -161,6 +161,9 @@ public:
 	// 외부에서 접근할 탄창이 비어있는지 학인할 함수
 	bool IsEmpty();
 
+	// 장전중 탄창이 가득 찼는지 확인 할 함수
+	bool IsFull();
+
 	// 위부에서 탄약갯수를 얻을 수 있도록
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }

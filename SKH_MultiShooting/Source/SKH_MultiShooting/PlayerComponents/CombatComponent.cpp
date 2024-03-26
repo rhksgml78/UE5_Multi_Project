@@ -13,6 +13,7 @@
 #include "Sound/SoundCue.h"
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "SKH_MultiShooting/HUD/PlayerOverlay.h"
+#include "SKH_MultiShooting/Character/PlayerAnimInstance.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -141,6 +142,17 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr) return;
+
+	if (Character && CombatState == ECombatState::ECS_Reloading &&
+		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
+	{
+		// 샷건과 유탄 발사기의 예외처리는 아래의 조건문을 실행하지않도록 실행후 바로 return
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+		return;
+	}
+
 	if (Character && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bAiming);
@@ -270,6 +282,53 @@ void UCombatComponent::UpdateAmmoValues()
 	}
 
 	EquippedWeapon->AddAmmo(-ReloadAmount);
+}
+
+void UCombatComponent::ShotgunShellReload()
+{
+	// 블루프린트 노티파이에서 함수가 호출되면 샷건의 탄을 업데이트(서버에서)
+	if (Character && Character->HasAuthority())
+	{
+		UpdateShotgunAmmoValues();
+	}
+}
+
+void UCombatComponent::UpdateShotgunAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		// 샷건과 유탄발사기는 1개씩 증감된다.
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	EquippedWeapon->AddAmmo(-1);
+	// 샷건과 유탄발사기는 한발씩 장전할때마다 바로 쏠 수 있어야 한다
+	bCanFire = true;
+
+
+	// 위작업으통하여 1번씩 탄창을 더하고 탄창이 꽉찼을경우 ShotgunEnd 섹션을 재생해야한다. (이작업은 서버에서만 실행된다. 때문에 클라이언트에서도 실행 시키기위해서는 Weapon 클래스의 복제된 변수실행 OnRep 함수에서도 같은 작업을 실행해 줘야 한다.
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0)
+	{
+		JumpToShotgunEnd();
+	}
+}
+
+void UCombatComponent::JumpToShotgunEnd()
+{
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Character->GetReloadMontage())
+	{
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -542,6 +601,14 @@ bool UCombatComponent::CanFire()
 	// 장착한 무기가 없다면 false 반환
 	if (EquippedWeapon == nullptr) return false;
 
+	// 샷건과 유탄발사기에 대하여 예외처리
+	if (!EquippedWeapon->IsEmpty() && bCanFire &&
+		CombatState == ECombatState::ECS_Reloading &&
+		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
+	{
+		return true;
+	}
+
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 
 }
@@ -553,6 +620,18 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	// 샷건or유탄발사기 일때 더이상 재장전할 탄창이 없을경우 몽타주 섹션을 건너 뛰어야 한다.
+	bool bJumpToShotgunEnd =
+		CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon != nullptr &&
+		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher) &&
+		CarriedAmmo == 0;
+
+	if (bJumpToShotgunEnd)
+	{
+		JumpToShotgunEnd();
 	}
 }
 
