@@ -39,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeFinished();
 
+	// 수류탄이 던저지는 타이밍에 수류탄을 스폰하거나 손에 표시된 수류탄을 감추는 함수
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
 	// 리펙토링 함수
 	void DropEquippedWeapon();
 	void AttachActorToLefttHand(AActor* ActorToAttach);
@@ -46,6 +50,7 @@ public:
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound();
 	void ReloadEmptyWeapon();
+	void ShowAttachedGrenade(bool bShowGrenade);
 
 
 protected:

@@ -68,6 +68,12 @@ APlayerCharacter::APlayerCharacter()
 
 	// 타임라인 컴포넌트
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+
+	// 수류탄을 들고 있을 것
+	AttachedGrenade = CreateAbstractDefaultSubobject< UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttachedGrenade->SetVisibility(false);
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -216,7 +222,10 @@ void APlayerCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 	}
-
+	if (AttachedGrenade)
+	{
+		AttachedGrenade->SetVisibility(false);
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)

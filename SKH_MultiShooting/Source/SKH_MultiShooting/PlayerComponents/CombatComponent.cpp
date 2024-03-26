@@ -287,7 +287,10 @@ void UCombatComponent::ReloadEmptyWeapon()
 void UCombatComponent::Reload()
 {
 	// 소지한 탄약의 수가 0보다 크고 플레이어가 리로드 상태가 아닐경우
-	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
+	if (CarriedAmmo > 0 && 
+		CombatState == ECombatState::ECS_Unoccupied && 
+		EquippedWeapon &&
+		!EquippedWeapon->IsFull())
 	{
 		// 서버 실행 함수를 호출한다.
 		ServerReload();
@@ -399,6 +402,12 @@ void UCombatComponent::ThrowGrenadeFinished()
 	AttachActorToRightHand(EquippedWeapon);
 }
 
+void UCombatComponent::LaunchGrenade()
+{
+	// 우선 손에 부착된 시각용 수류탄을 숨긴다.
+	ShowAttachedGrenade(false);
+}
+
 void UCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
@@ -418,6 +427,7 @@ void UCombatComponent::OnRep_CombatState()
 			// 로컬컨트롤(각플레이어)는 수류탄투척시 몽타주를 이미 재생하였기때문에 로컬이아닐때 재생시키도록한다.
 			Character->PlayThrowGrenadeMontage();
 			AttachActorToLefttHand(EquippedWeapon);
+			ShowAttachedGrenade(true);
 		}
 		break;
 	default:
@@ -466,6 +476,7 @@ void UCombatComponent::ThrowGrenade()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLefttHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 
 	// 클라이언트에서 서버 함수를 호출한다. 하지만 클라이언트가아닌 서버가 수류탄을 투척할 경우는 추가적으로 호출해서는 안된다.
@@ -483,7 +494,16 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLefttHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
+	}
+}
 
+void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
+{
+	if (Character &&
+		Character->GetAttachedGrenade())
+	{
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
 	}
 }
 
