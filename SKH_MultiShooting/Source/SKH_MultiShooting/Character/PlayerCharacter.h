@@ -32,6 +32,7 @@ public:
 	void PlayHitReactMontage();
 	void PlayElimMontage();
 	void PlayReLoadMontage();
+	void PlayThrowGrenadeMontage();
 
 	// 캐릭터의 움직임이 변할때마다 호출되는 함수(매프레임X)
 	virtual void OnRep_ReplicatedMovement() override;
@@ -68,6 +69,7 @@ protected:
 	void FireButtonPressed(); // Left Mouse Button(Down)
 	void FireButtonReleased(); // Left Mouse Button(Up)
 	void ReloadButtonPressed(); // E Key
+	void GrenadeButtonPressed(); // T Key ( G 키로변경할 수도있음)
 
 	// 애임오프셋
 	void AimOffset(float DeltaTime);
@@ -136,6 +138,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* ReLoadMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* ThrowGrenadeMontage;
 
 	// 카메라 가려짐 보안
 	void HideCameraIfCharacterClose();

@@ -35,6 +35,19 @@ public:
 
 	void JumpToShotgunEnd();
 
+	// 수류탄을 투척하고 다시 원래의 전투상태로 되돌리기위한 노티파이 연계 함수
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+
+	// 리펙토링 함수
+	void DropEquippedWeapon();
+	void AttachActorToLefttHand(AActor* ActorToAttach);
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void UpdateCarriedAmmo();
+	void PlayEquipWeaponSound();
+	void ReloadEmptyWeapon();
+
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -69,6 +82,12 @@ protected:
 
 	// 리로드때 재장전 할 수 있는 탄약갯수를 계산하는 함수
 	int32 AmountToReload();
+
+	// 수류탄 투척 관련
+	void ThrowGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
 
 private:
 	UPROPERTY()

@@ -128,10 +128,7 @@ void UCombatComponent::FireTimerFinished()
 		Fire();
 	}
 	// 타이머 종료시 총알이 없다면 재장전 호출
-	if (EquippedWeapon->IsEmpty())
-	{
-		Reload();
-	}
+	ReloadEmptyWeapon();
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -172,25 +169,92 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 
+	// 만일 수류탄을 투척중일때(ECS_Unoccupied 가아닐때)는 리턴 해야한다
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
 	// 만일 현재 장착중인 무기가있는데 다른 무기를 장착하려 할 경우 현재 들고있는 무길르 드랍시키고 새무기를 장착한다
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->Dropped();
-	}
+	DropEquippedWeapon();
 
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
 
+	// 무기를 오른손에 장착
+	AttachActorToRightHand(EquippedWeapon);
+
+	// 장착된 무기의 오너를 지정
 	EquippedWeapon->SetOwner(Character);
+
 	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
 	EquippedWeapon->SetHUDAmmo();
 
 	// CarriedAmmo 설정하기전에 무기의 타입 지정
+	UpdateCarriedAmmo();
+
+	// 서버에서 사운드 재생
+	PlayEquipWeaponSound();
+
+	// 무기를 집자마자 탄창이 비어있다면
+	ReloadEmptyWeapon();
+
+	// 아이템 장착시 정면으로 향하도록
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::DropEquippedWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
+}
+
+void UCombatComponent::AttachActorToLefttHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr ||
+		Character->GetMesh() == nullptr ||
+		ActorToAttach == nullptr)
+	{
+		return;
+	}
+
+	// 권총과 서브머신건은 소형이기때문에 추가적인 소켓을 생성하여 해당 소켓으로 붙인다.
+	bool bUseLeftPistolSocket =
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol ||
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachinGun;
+
+	// 삼항 연산을 사용하여 무기의 타입을 판단하고 타입별로 적절한 소켓으로 붙인다.
+	FName SocketName = bUseLeftPistolSocket ? FName("LeftPistolSocket") : FName("LeftHandSocket");
+		
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr || 
+		Character->GetMesh() == nullptr || 
+		ActorToAttach == nullptr)
+	{
+		return;
+	}
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::UpdateCarriedAmmo()
+{
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
+
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
@@ -201,32 +265,29 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+}
 
-	// 서버에서 사운드 재생
-	if (EquippedWeapon->EquipSound)
+void UCombatComponent::PlayEquipWeaponSound()
+{
+	if (Character && EquippedWeapon && EquippedWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
-			this, 
-			EquippedWeapon->EquipSound, 
+			this,
+			EquippedWeapon->EquipSound,
 			Character->GetActorLocation()
 		);
 	}
+}
 
-	// 무기를 집자마자 탄창이 비어있다면
-	if (EquippedWeapon->IsEmpty())
-	{
-		Reload();
-	}
-
-	// 아이템 장착시 정면으로 향하도록
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+void UCombatComponent::ReloadEmptyWeapon()
+{
+	if (EquippedWeapon && EquippedWeapon->IsEmpty()) Reload();
 }
 
 void UCombatComponent::Reload()
 {
 	// 소지한 탄약의 수가 0보다 크고 플레이어가 리로드 상태가 아닐경우
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// 서버 실행 함수를 호출한다.
 		ServerReload();
@@ -331,6 +392,13 @@ void UCombatComponent::JumpToShotgunEnd()
 	}
 }
 
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	// 수류탄 투척 완료시 원래상태로 되돌리기.
+	CombatState = ECombatState::ECS_Unoccupied;
+	AttachActorToRightHand(EquippedWeapon);
+}
+
 void UCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
@@ -342,6 +410,14 @@ void UCombatComponent::OnRep_CombatState()
 		if (bFireButtonPressed)
 		{
 			Fire();
+		}
+		break;
+	case ECombatState::ECS_ThrowingGrenade:
+		if (Character && !Character->IsLocallyControlled())
+		{
+			// 로컬컨트롤(각플레이어)는 수류탄투척시 몽타주를 이미 재생하였기때문에 로컬이아닐때 재생시키도록한다.
+			Character->PlayThrowGrenadeMontage();
+			AttachActorToLefttHand(EquippedWeapon);
 		}
 		break;
 	default:
@@ -377,30 +453,52 @@ int32 UCombatComponent::AmountToReload()
 	return 0;
 }
 
+void UCombatComponent::ThrowGrenade()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied)
+	{
+		// 수류탄을 한번던지고 연속 으로 던져지지 않도록 방지
+		return;
+	}
+	// 수류탄 투척시 서버와 플레이어 모두가 알아야 한다. 플레이어의 전투 상태는 복제되기때문에 변경시 클라이언트는 바로 알 수 있으나 서버는 따로 알 수 없기 떄문에 서버에서 호출될 RPC가 필요
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+		AttachActorToLefttHand(EquippedWeapon);
+	}
+
+	// 클라이언트에서 서버 함수를 호출한다. 하지만 클라이언트가아닌 서버가 수류탄을 투척할 경우는 추가적으로 호출해서는 안된다.
+	if (Character && !Character->HasAuthority())
+	{
+		ServerThrowGrenade();
+	}
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	// 서버 호출
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+		AttachActorToLefttHand(EquippedWeapon);
+
+	}
+}
+
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon && Character)
 	{
 		// 어태치 전에 무기의 상태를 확실히 변경한후에 어태치 시킬 수 있도록한다.
 		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-		}
-
+		AttachActorToRightHand(EquippedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 
 		// 클라이언트에서 사운드 재생
-		if (EquippedWeapon->EquipSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(
-				this,
-				EquippedWeapon->EquipSound,
-				Character->GetActorLocation()
-			);
-		}
+		PlayEquipWeaponSound();
 	}
 }
 
