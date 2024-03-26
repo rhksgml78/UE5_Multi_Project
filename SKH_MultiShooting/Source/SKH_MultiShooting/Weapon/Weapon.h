@@ -72,6 +72,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
 
+	// 무기의 아웃라인 윤곽선 설정 (depth 값 사용)
+	void EnableCustomDepth(bool bEnable);
+
 protected:
 	virtual void BeginPlay() override;
 
