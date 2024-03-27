@@ -406,6 +406,26 @@ void UCombatComponent::LaunchGrenade()
 {
 	// 우선 손에 부착된 시각용 수류탄을 숨긴다.
 	ShowAttachedGrenade(false);
+
+	// 플레이어BP에서 지정된 수류탄을 생성하여 발사한다.
+	if (Character && Character->HasAuthority() && GrenadeClass && Character->GetAttachedGrenade())
+	{
+		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
+		FVector ToTarget = HitTarget - StartingLocation;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			World->SpawnActor<AProjectile>(
+				GrenadeClass,
+				StartingLocation,
+				ToTarget.Rotation(),
+				SpawnParams
+			);
+		}
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()

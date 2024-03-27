@@ -4,6 +4,7 @@
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 #include "SKH_MultiShooting/PlayerTypes/CombatState.h"
+#include "SKH_MultiShooting/Weapon/Projectile.h"
 
 #include "CombatComponent.generated.h"
 
@@ -93,6 +94,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> GrenadeClass;
 
 private:
 	UPROPERTY()
