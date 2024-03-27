@@ -2,6 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
+#include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 #include "NiagaraComponent.h"
 
 APickup::APickup()
@@ -21,9 +22,10 @@ APickup::APickup()
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
 	PickupMesh->SetupAttachment(OverlapSphere);
 	PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	PickupMesh->SetRelativeScale3D(FVector(3.f, 3.f, 3.f));
 
 	// Ä¿½ºÅÒ µª½º ½ºÅÙ½Ç °ª ¼³Á¤
-	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
 	PickupMesh->MarkRenderStateDirty();
 	PickupMesh->SetRenderCustomDepth(true);
 

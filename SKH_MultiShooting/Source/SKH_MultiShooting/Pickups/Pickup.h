@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 
 #include "Pickup.generated.h"
 
