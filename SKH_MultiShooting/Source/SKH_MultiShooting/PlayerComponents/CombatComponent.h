@@ -188,6 +188,19 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 4;
 
+
+	// 수류탄의 소지 갯수 관련
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 2;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 3;
+
+	void UpdateHUDGrenades();
+
 	void InitializeCarriedAmmo();
 
 	// 플레이어의 상태를 지정하는 변수
@@ -205,5 +218,5 @@ private:
 
 public:	
 	void SetMaxWalkSpeed(float Value);
-	
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 };

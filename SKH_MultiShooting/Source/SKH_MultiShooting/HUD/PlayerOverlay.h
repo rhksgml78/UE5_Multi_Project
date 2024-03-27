@@ -33,6 +33,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* MatchCountdownText;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* GrenadeAmount;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
 	void PlayDeafeats_Implementation();

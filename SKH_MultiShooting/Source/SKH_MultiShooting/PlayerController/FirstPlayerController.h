@@ -20,6 +20,7 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
+	void SetHUDGrenades(int32 Grenades);
 
 	// 플레이어 사망시 재생할 애니메이션 호출 함수
 	void PlayDefeatsAnimation();
@@ -110,5 +111,7 @@ private:
 	float HUDHealth;
 	float HUDMaxHealth;
 	float HUDScore;
-	float HUDDefeats;
+	int32 HUDDefeats;
+	int32 HUDGrenades;
+	
 };

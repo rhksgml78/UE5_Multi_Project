@@ -29,6 +29,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME(UCombatComponent, Grenades);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
@@ -494,7 +495,10 @@ int32 UCombatComponent::AmountToReload()
 
 void UCombatComponent::ThrowGrenade()
 {
-	if (CombatState != ECombatState::ECS_Unoccupied)
+	// 우선 던질 수 있는 수류탄이 있는지 확인(클라이언트)
+	if (Grenades == 0) return;
+
+	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr)
 	{
 		// 수류탄을 한번던지고 연속 으로 던져지지 않도록 방지
 		return;
@@ -513,10 +517,23 @@ void UCombatComponent::ThrowGrenade()
 	{
 		ServerThrowGrenade();
 	}
+
+	// 클라이언트가아닌 서버에서 호출되었다면
+	if (Character && Character->HasAuthority())
+	{
+		// 수류탄이 던저졌다면 서버에서는 각플레이어의 수류탄 갯수를 감소시킨다.
+		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+
+		// 이후 컨트롤러의 HUD 오버레이를 업데이트한다.
+		UpdateHUDGrenades();
+	}
 }
 
 void UCombatComponent::ServerThrowGrenade_Implementation()
 {
+	// 우선 던질 수 있는 수류탄이 있는지 확인(서버)
+	if (Grenades == 0) return;
+
 	// 서버 호출
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)
@@ -525,6 +542,28 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 		AttachActorToLefttHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
 	}
+
+	// 수류탄이 던저졌다면 서버에서는 각플레이어의 수류탄 갯수를 감소시킨다.
+	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+
+	// 이후 컨트롤러의 HUD 오버레이를 업데이트한다.
+	UpdateHUDGrenades();
+}
+
+void UCombatComponent::UpdateHUDGrenades()
+{
+	Controller = Controller == nullptr ? Cast<AFirstPlayerController>(Character->Controller) : Controller;
+
+	if (Controller)
+	{
+		Controller->SetHUDGrenades(Grenades);
+	}
+}
+
+void UCombatComponent::OnRep_Grenades()
+{
+	// 각 클라이언트는 수류탄의 갯수가 변경될때 업데이트 시킨다.
+	UpdateHUDGrenades();
 }
 
 void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)

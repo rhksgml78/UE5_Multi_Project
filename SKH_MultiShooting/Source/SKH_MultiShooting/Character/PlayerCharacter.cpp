@@ -675,6 +675,9 @@ void APlayerCharacter::SimProxiesTurn()
 
 void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	// 플레이어가 Elimeed 처리가 되지 않은상태에서 중복된 데미지를 입기 대문에 해당변수가 한프레임에 변경되었을경우 또다시 데미지를 받지 않도록 제한을 둔다.
+	if (bElimmed) return;
+
 	// 체력범위 제한하여 계산
 	Health = FMath::Clamp(Health-Damage,0.f,MaxHealth);
 	
