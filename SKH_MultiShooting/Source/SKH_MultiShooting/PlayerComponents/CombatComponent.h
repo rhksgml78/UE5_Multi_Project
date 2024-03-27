@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LaunchGrenade();
 
+	// 서버에서 수류탄을 던지는 방향 확인
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
+
 	// 리펙토링 함수
 	void DropEquippedWeapon();
 	void AttachActorToLefttHand(AActor* ActorToAttach);

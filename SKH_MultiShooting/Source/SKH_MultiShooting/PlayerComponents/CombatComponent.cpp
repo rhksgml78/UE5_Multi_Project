@@ -407,11 +407,20 @@ void UCombatComponent::LaunchGrenade()
 	// 우선 손에 부착된 시각용 수류탄을 숨긴다.
 	ShowAttachedGrenade(false);
 
-	// 플레이어BP에서 지정된 수류탄을 생성하여 발사한다.
-	if (Character && Character->HasAuthority() && GrenadeClass && Character->GetAttachedGrenade())
+	// 각클라이언트에서 매프레임 업데이트되는 HitTarget의 값을 매개변수로 전달하여 수류탄을 서버에서 생성 한다.
+	if (Character && Character->IsLocallyControlled())
+	{
+		ServerLaunchGrenade(HitTarget);
+	}
+}
+
+void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
+{
+	// 플레이어BP에서 지정된 수류탄을 생성하여 발사한다. 단 생성은 서버에서만 하는데 각 클라이언트플레이어의 발사 각도는 따로 계산되어야한다.
+	if (Character && Character->GetAttachedGrenade() &&	GrenadeClass)
 	{
 		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
-		FVector ToTarget = HitTarget - StartingLocation;
+		FVector ToTarget = Target - StartingLocation;
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = Character;
 		SpawnParams.Instigator = Character;
