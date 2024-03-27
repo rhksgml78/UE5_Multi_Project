@@ -202,6 +202,27 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	Character->bUseControllerRotationYaw = true;
 }
 
+void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	// 실제 들고있는 탄약의 갯수를 늘려주고 HUD를 업데이트 해야함. 단 업데이트해야할것은 CarriedAmmo 가아닌 CarriedAmmoMap 이다.
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		// 최대소지량을 넘지 않도록
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+
+		// 현재들고있는 무기 타입의 정보를 얻어 HUD 업데이트를 실행
+		UpdateCarriedAmmo();
+	}
+
+	// 만일 현재들고있는 무기의 탄창이 0일경우 보충된다면 바로 자동 재장전을 실행
+	if (EquippedWeapon && 
+		EquippedWeapon->IsEmpty() && 
+		EquippedWeapon->GetWeaponType() == WeaponType)
+	{
+		Reload();
+	}
+}
+
 void UCombatComponent::DropEquippedWeapon()
 {
 	if (EquippedWeapon)

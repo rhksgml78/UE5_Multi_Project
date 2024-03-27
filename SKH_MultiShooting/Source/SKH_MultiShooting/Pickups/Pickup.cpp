@@ -2,6 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
 
 APickup::APickup()
 {
@@ -25,6 +26,9 @@ APickup::APickup()
 	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 	PickupMesh->MarkRenderStateDirty();
 	PickupMesh->SetRenderCustomDepth(true);
+
+	Effect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Effect"));
+	Effect->SetupAttachment(PickupMesh);
 }
 
 void APickup::BeginPlay()

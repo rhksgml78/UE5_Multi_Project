@@ -48,6 +48,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
+	// 아이템 회수 관련
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+
 	// 리펙토링 함수
 	void DropEquippedWeapon();
 	void AttachActorToLefttHand(AActor* ActorToAttach);
@@ -166,6 +169,9 @@ private:
 
 	// 무기의 타입에따라 소지하는 탄약의 갯수를 TMap으로 저장
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxCarriedAmmo = 200;
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
