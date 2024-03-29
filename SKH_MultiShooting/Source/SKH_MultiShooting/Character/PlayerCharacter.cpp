@@ -6,6 +6,7 @@
 #include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/Weapon/Weapon.h"
 #include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
+#include "SKH_MultiShooting/PlayerComponents/BuffComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerAnimInstance.h"
@@ -46,8 +47,12 @@ APlayerCharacter::APlayerCharacter()
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
+	// 컴포넌트는 복제가 가능해야한다.
 	Combat = CreateAbstractDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	Buff = CreateAbstractDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
@@ -118,10 +123,14 @@ void APlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// 컴뱃 컴포넌트의 값을 먼저 한번 갱신한다.
+	// 컴포넌트들을 사전초기화를 통하여 초기화 진행. 각각의 컴포넌트는  프랜드 클래스선언으로 직접 적으로 접근한다.
 	if (Combat)
 	{
 		Combat->Character = this;
+	}
+	if (Buff)
+	{
+		Buff->Character = this;
 	}
 }
 

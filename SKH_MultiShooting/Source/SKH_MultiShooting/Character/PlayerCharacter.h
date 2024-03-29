@@ -99,8 +99,13 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class UCameraComponent* FollowCamera;
 
+	// 전투와 관련된 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta =  (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
+
+	// 플레이어의 추가 능력치와 관련된 컴포넌트
+	UPROPERTY(VisibleAnywhere)
+	class UBuffComponent* Buff;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
