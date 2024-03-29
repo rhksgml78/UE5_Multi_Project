@@ -773,15 +773,18 @@ void APlayerCharacter::HideCameraIfCharacterClose()
 	}
 }
 
-void APlayerCharacter::OnRep_Health()
+void APlayerCharacter::OnRep_Health(float LastHealth)
 {
 	// 모든 클라이언트 실행 함수
 	
 	// 체력업데이트
 	UpdateHudHealth();
 
-	// 피격모션 실행
-	PlayHitReactMontage();
+	// 피격모션은 체력이회복하는동안 재생되면 안된다.
+	if (Health < LastHealth)
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void APlayerCharacter::UpdateHudHealth()

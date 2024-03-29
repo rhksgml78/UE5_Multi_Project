@@ -21,6 +21,12 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
 	if (PlayerCharacter)
 	{
+		// 플레이어의 버프컴포넌트에 접근
+		UBuffComponent* Buff = PlayerCharacter->GetBuff();
+		if (Buff)
+		{
+			Buff->Heal(HealAmount, HealingTime);
+		}
 
 	}
 
