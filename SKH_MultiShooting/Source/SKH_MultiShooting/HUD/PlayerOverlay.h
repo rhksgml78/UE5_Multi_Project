@@ -36,11 +36,16 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* GrenadeAmount;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* SpeedUpText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* SpeedUpUi;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
+
 	void PlayDeafeats_Implementation();
-
-
 protected:
 
 private:

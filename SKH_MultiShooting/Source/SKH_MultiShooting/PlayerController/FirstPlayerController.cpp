@@ -11,6 +11,8 @@
 #include "SKH_MultiShooting/PlayerComponents/CombatComponent.h"
 #include "SKH_MultiShooting/GameState/PlayerGameState.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
 
 void AFirstPlayerController::BeginPlay()
 {
@@ -509,5 +511,22 @@ void AFirstPlayerController::HandleCooldown()
 
 		// 캐릭터가 발사하고 있는동안 쿨다운 상태가 될경우 총알이 다 떨어질때까지 발사한채로 있게되므로 컴포넌트에 접근하여 발사를 중단 시킨다.
 		PlayerCharacter->GetCombat()->FireButtonPressed(false);
+	}
+}
+
+void AFirstPlayerController::SetSpeedUi(bool isVisible)
+{
+	if (PlayerOverlay)
+	{
+		if (isVisible == true)
+		{
+			PlayerOverlay->SpeedUpText->SetVisibility(ESlateVisibility::Visible);
+			PlayerOverlay->SpeedUpUi->SetVisibility(ESlateVisibility::Visible);
+		}
+		else if (isVisible == false)
+		{
+			PlayerOverlay->SpeedUpText->SetVisibility(ESlateVisibility::Hidden);
+			PlayerOverlay->SpeedUpUi->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 }

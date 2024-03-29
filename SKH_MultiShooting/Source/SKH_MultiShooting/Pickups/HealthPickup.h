@@ -13,7 +13,6 @@ class SKH_MULTISHOOTING_API AHealthPickup : public APickup
 	
 public:
 	AHealthPickup();
-	virtual void Destroyed() override;
 
 protected:
 	// 구체 콜리전 오버랩 이벤트와 바인딩할 함수
@@ -24,7 +23,7 @@ protected:
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult
-	);
+	) override;
 
 private:
 
@@ -33,10 +32,4 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float HealingTime = 5.f;
-
-	UPROPERTY(VisibleAnywhere)
-	class UNiagaraComponent* PickupEffectComponent;
-
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* PickupEffect;
 };

@@ -15,6 +15,8 @@ public:
 	UBuffComponent();
 	friend class APlayerCharacter;
 	void Heal(float HealAmount, float HealingTime);
+	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
+	void SetInitialSpeeds(float BaseSpeed, float CoruchSpeed);
 
 protected:
 	virtual void BeginPlay() override;
@@ -24,9 +26,20 @@ private:
 	UPROPERTY()
 	class APlayerCharacter* Character;
 
+	// 회복관련
 	bool bHealing = false;
 	float HealingRate = 0.f;
 	float AmountToHeal = 0.f;
+
+	// 속도상승 관련
+	FTimerHandle SpeedBuffTimer;
+	void ResetSpeed();
+	float InitialBaseSpeed;
+	float InitialCrouchSpeed;
+
+	// 서버와 클라이언트간의 프레임 차이로 인하여 속도 버프에 시간적 오차가 생길 수 있기때문에 이를 방지하기 위하여 멀티캐스트RPC를 사용하여 모두 동등하게 한다.
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSpeedBuff(float BaseSpeed, float CoruchSpeed);
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

@@ -96,6 +96,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// 모든 클라에 복제
 	DOREPLIFETIME(APlayerCharacter, Health);
 	DOREPLIFETIME(APlayerCharacter, bDisableGameplay);
+	DOREPLIFETIME(APlayerCharacter, SpeedUpBuff);
 }
 
 void APlayerCharacter::Destroyed()
@@ -131,6 +132,7 @@ void APlayerCharacter::PostInitializeComponents()
 	if (Buff)
 	{
 		Buff->Character = this;
+		Buff->SetInitialSpeeds(GetCharacterMovement()->MaxWalkSpeed, GetCharacterMovement()->MaxWalkSpeedCrouched);
 	}
 }
 
@@ -591,6 +593,12 @@ float APlayerCharacter::CalculateSpeed()
 	return Velocity.Size();
 }
 
+void APlayerCharacter::OnRep_SpeedUp()
+{
+	// 지정한 값이 변경되면 함수가 자동적으로 실행된다.
+	SetSpeedUi(SpeedUpBuff);
+}
+
 void APlayerCharacter::AimOffset(float DeltaTime)
 {
 	// 무기가 없으면 리턴
@@ -890,4 +898,27 @@ ECombatState APlayerCharacter::GetCombatState() const
 		return ECombatState::ECS_MAX;
 	}
 	return Combat->CombatState;
+}
+
+void APlayerCharacter::SetSpeedUpBuff(bool isSpeedUpActive)
+{
+	// 매개변수를 통하여 복제 변수의 값을 변경하고
+	SpeedUpBuff = isSpeedUpActive;
+
+	// 변수가 바뀌면 클라이언트는 OnRep_SpeedUp함수를 자동실행하지만 서버는 그렇지 않기 때문에 서버의 조건에서는 직접 함수를 호출한다.
+
+	if (HasAuthority()) // 서버에서 실행
+	{
+		OnRep_SpeedUp();
+	}
+}
+
+void APlayerCharacter::SetSpeedUi(bool isVisible)
+{
+	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+	if (FirstPlayerController)
+	{
+		FirstPlayerController->SetSpeedUi(isVisible);
+	}
 }

@@ -1,6 +1,6 @@
 #include "BuffComponent.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
-
+#include "GameFramework/CharacterMovementComponent.h"
 
 UBuffComponent::UBuffComponent()
 {
@@ -28,6 +28,62 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 	bHealing = true;
 	HealingRate = HealAmount / HealingTime;
 	AmountToHeal += HealAmount;
+}
+
+void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
+{
+	if (Character == nullptr || 
+		Character->GetCharacterMovement() == nullptr) return;
+
+	// 버프시간만큼의 타이머를 설정하고 버프타임종료시 초기화 함수를 호출 한다.
+	Character->GetWorldTimerManager().SetTimer(
+		SpeedBuffTimer,
+		this,
+		&ThisClass::ResetSpeed,
+		BuffTime
+	);
+
+	// BuffTime 시간동안만큼 속도를 상승 시킨다.
+	if (Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BuffBaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = BuffCrouchSpeed;
+	};
+
+	// 서버와 클라이언트간의 차이를 없애기 위해서 멀티캐스트 RPC 함수를 호출 한다.
+	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed);
+}
+
+void UBuffComponent::ResetSpeed()
+{
+	if (Character == nullptr || 
+		Character->GetCharacterMovement() == nullptr) return;
+
+	// 저장해둔 원래의 값으로 초기화
+	if (Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = InitialBaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
+	};
+	if (Character)
+	{
+		// 스피드UI OFF
+		Character->SetSpeedUpBuff(false);
+	}
+	// 서버와 클라이언트간의 차이를 없애기 위해서 멀티캐스트 RPC 함수를 호출 한다.
+	MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed);
+}
+
+void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CoruchSpeed)
+{
+	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CoruchSpeed;
+}
+
+void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CoruchSpeed)
+{
+	InitialBaseSpeed = BaseSpeed;
+	InitialCrouchSpeed = CoruchSpeed;
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime)

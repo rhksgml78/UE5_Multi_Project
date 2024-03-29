@@ -113,5 +113,8 @@ private:
 	float HUDScore;
 	int32 HUDDefeats;
 	int32 HUDGrenades;
-	
+
+public:
+	FORCEINLINE APlayerHUD* GetPlayerHUD() const { return PlayerHUD; }
+	void SetSpeedUi(bool isVisible);
 };

@@ -4,6 +4,7 @@
 #include "Components/SphereComponent.h"
 #include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 APickup::APickup()
 {
@@ -29,8 +30,8 @@ APickup::APickup()
 	PickupMesh->MarkRenderStateDirty();
 	PickupMesh->SetRenderCustomDepth(true);
 
-	Effect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Effect"));
-	Effect->SetupAttachment(PickupMesh);
+	EffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EffectComponent"));
+	EffectComponent->SetupAttachment(PickupMesh);
 }
 
 void APickup::BeginPlay()
@@ -53,7 +54,7 @@ void APickup::Tick(float DeltaTime)
 
 void APickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	// 자식클래스에서 재정의하여 사용중
 }
 
 void APickup::Destroyed()
@@ -66,6 +67,16 @@ void APickup::Destroyed()
 			this,
 			PickUpSound,
 			GetActorLocation()
+		);
+	}
+	// 아이템을 플레이어가 획득하여 소멸되었을때 이펙트 출현
+	if (PickupEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			this,
+			PickupEffect,
+			GetActorLocation(),
+			GetActorRotation()
 		);
 	}
 }

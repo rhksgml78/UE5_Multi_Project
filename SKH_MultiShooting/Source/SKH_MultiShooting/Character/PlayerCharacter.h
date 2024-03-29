@@ -54,6 +54,10 @@ public:
 	// HUD 체력 업데이트 함수
 	void UpdateHudHealth();
 
+	// HUD 스피드업 노출 함수
+	void SetSpeedUi(bool isVisible);
+	void SetSpeedUpBuff(bool isSpeedUpActive);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -162,6 +166,12 @@ private:
 
 	// 속도 관련
 	float CalculateSpeed();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SpeedUp, VisibleAnywhere, Category = "Player State")
+	bool SpeedUpBuff = false;
+
+	UFUNCTION()
+	void OnRep_SpeedUp(); 
 
 	// 플레이어의 체력 관련
 	UPROPERTY(EditAnywhere, Category = "Player State")
