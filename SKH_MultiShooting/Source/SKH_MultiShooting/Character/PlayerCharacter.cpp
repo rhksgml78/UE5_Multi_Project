@@ -95,6 +95,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// 모든 클라에 복제
 	DOREPLIFETIME(APlayerCharacter, Health);
+	DOREPLIFETIME(APlayerCharacter, Shield);
 	DOREPLIFETIME(APlayerCharacter, bDisableGameplay);
 	DOREPLIFETIME(APlayerCharacter, SpeedUpBuff);
 }
@@ -228,8 +229,9 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// HUD 체력 업데이트
+	// HUD 체력&쉴드 업데이트
 	UpdateHudHealth();
+	UpdateHudShield();
 
 	// 데미지 콜백함수는 서버에서만 바인딩 할것
 	if (HasAuthority())
@@ -698,11 +700,31 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	// 플레이어가 Elimeed 처리가 되지 않은상태에서 중복된 데미지를 입기 대문에 해당변수가 한프레임에 변경되었을경우 또다시 데미지를 받지 않도록 제한을 둔다.
 	if (bElimmed) return;
 
+	// 우선 첼력이 깍이기전에 쉴드가 먼저 깍여야 한다.
+	float DamageToHealth = Damage;
+	if (Shield > 0)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield); 
+			
+			// 모든값이 쉴드로 상쇄된다면 체력에 미치는 데미지는 0이다.
+			DamageToHealth = 0;
+		}
+		else
+		{
+			// 쉴드가 0이 되어버리고나서는 들어오는 데미지의 값에서 쉴드(0)을 뺀값 즉, 데미지 그대로의 값을 체력에 미치는 데미지로 지정 한다.
+			Shield = 0.f;
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+		}
+	}
+
 	// 체력범위 제한하여 계산
-	Health = FMath::Clamp(Health-Damage,0.f,MaxHealth);
+	Health = FMath::Clamp(Health- DamageToHealth,0.f,MaxHealth);
 	
 	// HUD 업데이트
 	UpdateHudHealth();
+	UpdateHudShield();
 
 	// 피격 모션 실행
 	PlayHitReactMontage();
@@ -798,6 +820,18 @@ void APlayerCharacter::OnRep_Health(float LastHealth)
 	}
 }
 
+void APlayerCharacter::OnRep_Shield(float LastShield)
+{
+	// 모든 클라이언트 실행 함수
+
+	// 쉴드업데이트
+	UpdateHudShield();
+	if (Shield < LastShield)
+	{
+		PlayHitReactMontage();
+	}
+}
+
 void APlayerCharacter::UpdateHudHealth()
 {
 	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
@@ -805,6 +839,16 @@ void APlayerCharacter::UpdateHudHealth()
 	if (FirstPlayerController)
 	{
 		FirstPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void APlayerCharacter::UpdateHudShield()
+{
+	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+	if (FirstPlayerController)
+	{
+		FirstPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 

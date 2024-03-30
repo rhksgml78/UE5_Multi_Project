@@ -14,6 +14,7 @@ class SKH_MULTISHOOTING_API AFirstPlayerController : public APlayerController
 public:
 	// HUD의 값 설정
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
@@ -107,12 +108,22 @@ private:
 	class UPlayerOverlay* PlayerOverlay;
 
 	// 플레이어의 HUD 초기값을 설정할 변수들
-	bool bInitializePlayerOverlay = false;
 	float HUDHealth;
 	float HUDMaxHealth;
+	bool bInitializeHealth = false; // 초기화를 했는지 확인할 변수
+
+	float HUDShield;
+	float HUDMaxShield;
+	bool bInitializeShield = false; // 초기화를 했는지 확인할 변수
+
 	float HUDScore;
+	bool bInitializeScore = false; // 초기화를 했는지 확인할 변수
+
 	int32 HUDDefeats;
+	bool bInitializeDefeats = false; // 초기화를 했는지 확인할 변수
+
 	int32 HUDGrenades;
+	bool bInitializeGrenades = false; // 초기화를 했는지 확인할 변수
 
 public:
 	FORCEINLINE APlayerHUD* GetPlayerHUD() const { return PlayerHUD; }

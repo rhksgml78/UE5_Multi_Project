@@ -37,7 +37,6 @@ void AFirstPlayerController::Tick(float DeltaTime)
 	// 매프레임 동기화 시간 체크 
 	CheckTimeSync(DeltaTime);
 	PollInit();
-
 }
 
 void AFirstPlayerController::CheckTimeSync(float DeltaTime)
@@ -161,14 +160,67 @@ void AFirstPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		PlayerHUD->PlayerOverlay->HealthBar->SetPercent(HealthPercent);
 
 		// 체력바 텍스트 설정(스트링으로 연산후 텍스트로)
-		FString HealthText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
-		PlayerHUD->PlayerOverlay->HealthText->SetText(FText::FromString(HealthText));
+		if (Health > 0)
+		{
+			FString HealthText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
+			PlayerHUD->PlayerOverlay->HealthText->SetText(FText::FromString(HealthText));
+		}
+		else
+		{
+			FString HealthText = FString::Printf(TEXT("Death!"));
+			PlayerHUD->PlayerOverlay->HealthText->SetText(FText::FromString(HealthText));
+		}
 	}
 	else
 	{
-		bInitializePlayerOverlay = true;
+		bInitializeHealth = true;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
+	}
+}
+
+void AFirstPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->ShieldBar &&
+		PlayerHUD->PlayerOverlay->ShieldText;
+
+
+	if (bHUDValid)
+	{
+		// 체력바 게이지 설정
+		const float ShieldPercent = Shield / MaxShield;
+		PlayerHUD->PlayerOverlay->ShieldBar->SetPercent(ShieldPercent);
+
+		// 체력바 텍스트 설정(스트링으로 연산후 텍스트로)
+		/*
+		텍스트 형식 [현재쉴드/최대쉴드]
+				FString ShieldText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		PlayerHUD->PlayerOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+		*/
+
+		if (Shield > 0)
+		{
+			// 텍스트 형식 Armor : 현재 쉴드
+			FString ShieldText = FString::Printf(TEXT("%d"), FMath::CeilToInt(Shield));
+			PlayerHUD->PlayerOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+		}
+		else
+		{
+			// 텍스트 형식 Armor : 현재 쉴드
+			FString ShieldText = FString::Printf(TEXT("Broken!"));
+			PlayerHUD->PlayerOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+		}
+
+	}
+	else
+	{
+		bInitializeShield = true;
+		HUDShield = Shield;
+		HUDMaxShield = MaxShield;
 	}
 }
 
@@ -187,7 +239,7 @@ void AFirstPlayerController::SetHUDScore(float Score)
 	}
 	else
 	{
-		bInitializePlayerOverlay = true;
+		bInitializeScore = true;
 		HUDScore = Score;
 	}
 }
@@ -207,7 +259,7 @@ void AFirstPlayerController::SetHUDDefeats(int32 Defeats)
 	}
 	else
 	{
-		bInitializePlayerOverlay = true;
+		bInitializeDefeats = true;
 		HUDDefeats = Defeats;
 	}
 }
@@ -319,6 +371,7 @@ void AFirstPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 	else
 	{
+		bInitializeGrenades = true;
 		HUDGrenades = Grenades;
 	}
 }
@@ -375,14 +428,31 @@ void AFirstPlayerController::PollInit()
 			PlayerOverlay = PlayerHUD->PlayerOverlay;
 			if (PlayerOverlay)
 			{
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
+				// 각 HUD 업데이트는 초기화가 이루어졌는지 확인후에 매프레임 업데이트가 진행된다.
+				if (bInitializeHealth)
+				{
+					SetHUDHealth(HUDHealth, HUDMaxHealth);
+				}
+				if (bInitializeShield)
+				{
+					SetHUDShield(HUDShield, HUDMaxShield);
+				}
+				if (bInitializeScore)
+				{
+					SetHUDScore(HUDScore);
+				}
+				if (bInitializeDefeats)
+				{
+					SetHUDDefeats(HUDDefeats);
+				}
 
 				APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
 				if (PlayerCharacter && PlayerCharacter->GetCombat())
 				{
-					SetHUDGrenades(PlayerCharacter->GetCombat()->GetGrenades());
+					if (bInitializeGrenades)
+					{
+						SetHUDGrenades(PlayerCharacter->GetCombat()->GetGrenades());
+					}
 				}
 			}
 		}

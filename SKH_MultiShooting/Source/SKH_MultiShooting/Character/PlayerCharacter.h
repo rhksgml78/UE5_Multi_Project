@@ -54,6 +54,9 @@ public:
 	// HUD 체력 업데이트 함수
 	void UpdateHudHealth();
 
+	// HUD 쉴드 업데이트 함수
+	void UpdateHudShield();
+
 	// HUD 스피드업 노출 함수
 	void SetSpeedUi(bool isVisible);
 	void SetSpeedUpBuff(bool isSpeedUpActive);
@@ -182,6 +185,17 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health(float LastHealth); // 복제변수가사용될 함수
+
+	// 플레이어의 쉴드 관련
+	UPROPERTY(EditAnywhere, Category = "Player State")
+	float MaxShield = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Shield, VisibleAnywhere, Category = "Player State")
+	float Shield = 100.f;
+
+	UFUNCTION()
+	void OnRep_Shield(float LastShield); // 복제변수가사용될 함수
+
 
 	UPROPERTY()
 	class AFirstPlayerController* FirstPlayerController;
