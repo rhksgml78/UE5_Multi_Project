@@ -15,12 +15,14 @@ public:
 	UBuffComponent();
 	friend class APlayerCharacter;
 	void Heal(float HealAmount, float HealingTime);
+	void ReplenishShield(float ShieldAmount, float ReplenishTime);
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffJumpZVelocity, float BuffTime);
 	void SetInitialSpeeds(float BaseSpeed, float CoruchSpeed, float JumpZVelocity);
 
 protected:
 	virtual void BeginPlay() override;
 	void HealRampUp(float DeltaTime);
+	void ShieldRampUp(float DeltaTime);
 
 private:
 	UPROPERTY()
@@ -30,6 +32,11 @@ private:
 	bool bHealing = false;
 	float HealingRate = 0.f;
 	float AmountToHeal = 0.f;
+
+	// 쉴드 회복관련
+	bool bReplenishingShield = false;
+	float ShieldReplenishRate = 0.f;
+	float ShieldReplenishAmount = 0.f;
 
 	// 속도상승 관련
 	FTimerHandle SpeedBuffTimer;

@@ -32,6 +32,7 @@ APickup::APickup()
 
 	EffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EffectComponent"));
 	EffectComponent->SetupAttachment(PickupMesh);
+	EffectComponent->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
 }
 
 void APickup::BeginPlay()

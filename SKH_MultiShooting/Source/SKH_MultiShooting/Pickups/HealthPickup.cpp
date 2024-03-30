@@ -22,7 +22,6 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			Buff->Heal(HealAmount, HealingTime);
 		}
-
 	}
 
 	// 디스트로이시 해당클래스에서 정의하지 않았으므로 부모클래스의 것이 호출되고 Destroyed 함수의 사운드 재생이 출력되고 디스트로이 실행.
