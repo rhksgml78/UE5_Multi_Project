@@ -34,6 +34,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CrouchSpeedBuff = 600.f;
 
+	// 점프 Z 속도 (기본 1500)
+	UPROPERTY(EditAnywhere)
+	float JumpZVelocityBuff = 3000.f;
+
 	// 속도상승 유지 시간
 	UPROPERTY(EditAnywhere)
 	float SpeedBuffTime = 10.f;

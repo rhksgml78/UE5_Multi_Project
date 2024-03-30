@@ -30,7 +30,7 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 	AmountToHeal += HealAmount;
 }
 
-void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
+void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffJumpZVelocity, float BuffTime)
 {
 	if (Character == nullptr || 
 		Character->GetCharacterMovement() == nullptr) return;
@@ -48,10 +48,11 @@ void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BuffBaseSpeed;
 		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = BuffCrouchSpeed;
+		Character->GetCharacterMovement()->JumpZVelocity = BuffJumpZVelocity;
 	};
 
 	// 서버와 클라이언트간의 차이를 없애기 위해서 멀티캐스트 RPC 함수를 호출 한다.
-	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed);
+	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed, BuffJumpZVelocity);
 }
 
 void UBuffComponent::ResetSpeed()
@@ -64,6 +65,7 @@ void UBuffComponent::ResetSpeed()
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = InitialBaseSpeed;
 		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
+		Character->GetCharacterMovement()->JumpZVelocity = InitialJumpZVelocity;
 	};
 	if (Character)
 	{
@@ -71,19 +73,21 @@ void UBuffComponent::ResetSpeed()
 		Character->SetSpeedUpBuff(false);
 	}
 	// 서버와 클라이언트간의 차이를 없애기 위해서 멀티캐스트 RPC 함수를 호출 한다.
-	MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed);
+	MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed, InitialJumpZVelocity);
 }
 
-void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CoruchSpeed)
+void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CoruchSpeed, float JumpZVelocity)
 {
 	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
 	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CoruchSpeed;
+	Character->GetCharacterMovement()->JumpZVelocity = JumpZVelocity;
 }
 
-void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CoruchSpeed)
+void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CoruchSpeed, float JumpZVelocity)
 {
 	InitialBaseSpeed = BaseSpeed;
 	InitialCrouchSpeed = CoruchSpeed;
+	InitialJumpZVelocity = JumpZVelocity;
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime)
