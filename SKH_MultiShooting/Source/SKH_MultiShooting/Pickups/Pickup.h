@@ -47,6 +47,11 @@ private:
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* PickupEffect;
 
+	// 시간차를 두고 바인딩 하기위한 변수와 함수
+	FTimerHandle BindOverlapTimer;
+	float BindOverlapTime = 0.25f;
+	void BindOverlapTimerFinished();
+
 public:	
 
 

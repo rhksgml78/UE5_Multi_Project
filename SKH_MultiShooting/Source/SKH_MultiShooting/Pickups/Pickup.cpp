@@ -39,10 +39,15 @@ void APickup::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 구체 충돌박스의 오버랩이벤트를 바인딩. 단, 서버에서만 계산진행
+	// 구체 충돌박스의 오버랩이벤트를 타이머로 바인딩. 단, 서버에서만 계산진행, 즉시 바인딩하면 아이템을 먹고 플레이어가 그위치에 그대로있을경우 플레이어때문에 생성되자마자 겹쳐지고 추가생성이 안되기때문에 아이템 생성후 일시적인 시간차를 두고나서 바인딩한다.
 	if (HasAuthority())
 	{
-		OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereOverlap);
+		GetWorldTimerManager().SetTimer(
+			BindOverlapTimer,
+			this,
+			&ThisClass::BindOverlapTimerFinished,
+			BindOverlapTime
+		);
 	}
 }
 
@@ -56,6 +61,11 @@ void APickup::Tick(float DeltaTime)
 void APickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// 자식클래스에서 재정의하여 사용중
+}
+
+void APickup::BindOverlapTimerFinished()
+{
+	OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereOverlap);
 }
 
 void APickup::Destroyed()
