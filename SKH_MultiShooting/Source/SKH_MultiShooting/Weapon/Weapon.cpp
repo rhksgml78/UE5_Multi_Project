@@ -225,7 +225,14 @@ void AWeapon::OnRep_Owner()
 	}
 	else
 	{
-		SetHUDAmmo();
+		PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(Owner) : PlayerOwnerCharacter;
+
+		if (PlayerOwnerCharacter && 
+			PlayerOwnerCharacter->GetEquippedWeapon() &&
+			PlayerOwnerCharacter->GetEquippedWeapon() == this)
+		{
+			SetHUDAmmo();
+		}
 	}
 }
 

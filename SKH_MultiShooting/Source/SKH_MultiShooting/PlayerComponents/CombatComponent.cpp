@@ -27,6 +27,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
@@ -173,33 +174,90 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// 만일 수류탄을 투척중일때(ECS_Unoccupied 가아닐때)는 리턴 해야한다
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
-	// 만일 현재 장착중인 무기가있는데 다른 무기를 장착하려 할 경우 현재 들고있는 무길르 드랍시키고 새무기를 장착한다
-	DropEquippedWeapon();
-
-	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-
-	// 무기를 오른손에 장착
-	AttachActorToRightHand(EquippedWeapon);
-
-	// 장착된 무기의 오너를 지정
-	EquippedWeapon->SetOwner(Character);
-
-	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
-	EquippedWeapon->SetHUDAmmo();
-
-	// CarriedAmmo 설정하기전에 무기의 타입 지정
-	UpdateCarriedAmmo();
-
-	// 서버에서 사운드 재생
-	PlayEquipWeaponSound();
-
-	// 무기를 집자마자 탄창이 비어있다면
-	ReloadEmptyWeapon();
+	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	{
+		// 기본무기가 장착된 상태에서 보조무기가 비어있다면 보조무기를 장착
+		EquipSecondaryWeapon(WeaponToEquip);
+	}
+	else
+	{
+		// 위의 조건문이아닐경우. 
+		// 주무기 보조무기 모두 비어있거나 
+		// 주무기만 비어있거나
+		// 주무기 보조무기가 모두 장착되어있거나
+		EquipPrimaryWeapon(WeaponToEquip);
+	}
 
 	// 아이템 장착시 정면으로 향하도록
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		// 어태치 전에 무기의 상태를 확실히 변경한후에 어태치 시킬 수 있도록한다.
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachActorToRightHand(EquippedWeapon);
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+
+		// 클라이언트에서 사운드 재생
+		PlayEquipWeaponSound(EquippedWeapon);
+	}
+}
+
+void UCombatComponent::OnRep_SecondaryWeapon()
+{
+	// 클라이언트에서 적용
+	if (SecondaryWeapon && Character)
+	{
+		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttackActorToBackpack(SecondaryWeapon);
+		PlayEquipWeaponSound(SecondaryWeapon);
+	}
+}
+
+void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+
+	// 만일 현재 장착중인 무기가있는데 다른 무기를 장착하려 할 경우 현재 들고있는 무길르 드랍시키고 새무기를 장착한다
+	DropEquippedWeapon();
+	EquippedWeapon = WeaponToEquip;
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	// 무기를 오른손에 장착
+	AttachActorToRightHand(EquippedWeapon);
+	// 장착된 무기의 오너를 지정
+	EquippedWeapon->SetOwner(Character);
+	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
+	EquippedWeapon->SetHUDAmmo();
+	// CarriedAmmo 설정하기전에 무기의 타입 지정
+	UpdateCarriedAmmo();
+	// 서버에서 사운드 재생
+	PlayEquipWeaponSound(WeaponToEquip);
+	// 무기를 집자마자 탄창이 비어있다면
+	ReloadEmptyWeapon();
+}
+
+void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+
+	// 보조무기 지정
+	SecondaryWeapon = WeaponToEquip;
+	// 보조무기의 상태를 장착으로 변경 및 상세 설정 변경
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	// 오너 지정
+	SecondaryWeapon->SetOwner(Character);
+	// 무기타입에따라 적절한 위치로 부착
+	AttackActorToBackpack(WeaponToEquip);
+	// 해당 무기의 장착 사운드 실행
+	PlayEquipWeaponSound(WeaponToEquip);
+
+	if (WeaponToEquip == nullptr) return;
+	EquippedWeapon->SetOwner(Character);
 }
 
 void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
@@ -259,10 +317,8 @@ void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 {
 	if (Character == nullptr || 
 		Character->GetMesh() == nullptr || 
-		ActorToAttach == nullptr)
-	{
-		return;
-	}
+		ActorToAttach == nullptr) return;
+
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
 	if (HandSocket)
 	{
@@ -270,12 +326,28 @@ void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 	}
 }
 
+void UCombatComponent::AttackActorToBackpack(AActor* ActorToAttach)
+{
+	if (Character == nullptr ||
+		Character->GetMesh() == nullptr ||
+		ActorToAttach == nullptr) return;
+
+	// 권총과 서브머신건은 허리소켓에 부착해야한다.
+	bool bUsePistolSocket =
+		SecondaryWeapon->GetWeaponType() == EWeaponType::EWT_Pistol ||
+		SecondaryWeapon->GetWeaponType() == EWeaponType::EWT_SubmachinGun;
+	FName SocketName = bUsePistolSocket ? FName("SpineSocket") : FName("NeckSocket");
+
+	const USkeletalMeshSocket* SecondarySocket = Character->GetMesh()->GetSocketByName(SocketName);
+	if (SecondarySocket)
+	{
+		SecondarySocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
 void UCombatComponent::UpdateCarriedAmmo()
 {
-	if (EquippedWeapon == nullptr)
-	{
-		return;
-	}
+	if (EquippedWeapon == nullptr) return;
 
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
@@ -289,13 +361,13 @@ void UCombatComponent::UpdateCarriedAmmo()
 	}
 }
 
-void UCombatComponent::PlayEquipWeaponSound()
+void UCombatComponent::PlayEquipWeaponSound(AWeapon* WeaponToEquip)
 {
-	if (Character && EquippedWeapon && EquippedWeapon->EquipSound)
+	if (Character && WeaponToEquip && WeaponToEquip->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
-			EquippedWeapon->EquipSound,
+			WeaponToEquip->EquipSound,
 			Character->GetActorLocation()
 		);
 	}
@@ -593,21 +665,6 @@ void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 		Character->GetAttachedGrenade())
 	{
 		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
-	}
-}
-
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if (EquippedWeapon && Character)
-	{
-		// 어태치 전에 무기의 상태를 확실히 변경한후에 어태치 시킬 수 있도록한다.
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-		AttachActorToRightHand(EquippedWeapon);
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-
-		// 클라이언트에서 사운드 재생
-		PlayEquipWeaponSound();
 	}
 }
 
