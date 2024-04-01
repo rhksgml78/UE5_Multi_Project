@@ -85,7 +85,7 @@ protected:
 	void FireButtonPressed(); // Left Mouse Button(Down)
 	void FireButtonReleased(); // Left Mouse Button(Up)
 	void ReloadButtonPressed(); // E Key
-	void GrenadeButtonPressed(); // T Key ( G 키로변경할 수도있음)
+	void GrenadeButtonPressed(); // G Key
 
 	// 애임오프셋
 	void AimOffset(float DeltaTime);

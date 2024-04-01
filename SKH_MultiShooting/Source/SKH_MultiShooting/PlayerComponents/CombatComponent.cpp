@@ -205,6 +205,9 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 		// 클라이언트에서 사운드 재생
 		PlayEquipWeaponSound(EquippedWeapon);
+
+		// 무기교체시 상태가 바뀔때 클라이언트의 HUD 업데이트 되도록
+		EquippedWeapon->SetHUDAmmo();
 	}
 }
 
@@ -213,10 +216,32 @@ void UCombatComponent::OnRep_SecondaryWeapon()
 	// 클라이언트에서 적용
 	if (SecondaryWeapon && Character)
 	{
-		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 		AttackActorToBackpack(SecondaryWeapon);
 		PlayEquipWeaponSound(SecondaryWeapon);
 	}
+}
+
+void UCombatComponent::SwapWeapon()
+{
+	if (EquippedWeapon == nullptr || SecondaryWeapon == nullptr) return;
+
+	// 스왑 방식을 사용하여 주무기와 보조무기의 값을 변경한다.
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+	TempWeapon = nullptr;
+
+	// 이후 주무기와 보조무기의 상세 설정을 진행한다.
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	PlayEquipWeaponSound(EquippedWeapon);
+	ReloadEmptyWeapon();
+
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttackActorToBackpack(SecondaryWeapon);
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
@@ -248,16 +273,13 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
 	// 보조무기 지정
 	SecondaryWeapon = WeaponToEquip;
 	// 보조무기의 상태를 장착으로 변경 및 상세 설정 변경
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	// 오너 지정
 	SecondaryWeapon->SetOwner(Character);
 	// 무기타입에따라 적절한 위치로 부착
 	AttackActorToBackpack(WeaponToEquip);
 	// 해당 무기의 장착 사운드 실행
 	PlayEquipWeaponSound(WeaponToEquip);
-
-	if (WeaponToEquip == nullptr) return;
-	EquippedWeapon->SetOwner(Character);
 }
 
 void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
@@ -910,3 +932,7 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
 }
 
+bool UCombatComponent::ShouldSwapWeapon()
+{
+	return (EquippedWeapon != nullptr && SecondaryWeapon != nullptr);
+}

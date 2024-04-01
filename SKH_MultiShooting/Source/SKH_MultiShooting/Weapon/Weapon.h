@@ -12,6 +12,7 @@ enum class EWeaponState : uint8
 {
 	EWS_Initial UMETA(DisplayName = "Initial State"),
 	EWS_Equipped UMETA(DisplayName = "Equipped"),
+	EWS_EquippedSecondary UMETA(DisplayName = "Equipped Secondary"),
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -80,6 +81,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnWeaponStateSet();
+
+	// 무기상태에따른 설정 리펙토링
+	virtual void OnEquipped();
+	virtual void OnDroped();
+	virtual void OnEquippedSecondary();
 
 	// 구체 콜리전 오버랩 이벤트와 바인딩할 함수
 	UFUNCTION()

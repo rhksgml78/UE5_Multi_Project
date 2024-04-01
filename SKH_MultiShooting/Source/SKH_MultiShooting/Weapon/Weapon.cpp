@@ -95,41 +95,21 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
+	OnWeaponStateSet();
+}
 
+void AWeapon::OnWeaponStateSet()
+{
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponType == EWeaponType::EWT_SubmachinGun)
-		{
-			// 서브머신건의 피직스 사용을 위해서
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		// 윤곽선 설정
-		EnableCustomDepth(false);
+		OnEquipped();
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+		OnEquippedSecondary();
 		break;
 	case EWeaponState::EWS_Dropped:
-		if (HasAuthority())
-		{
-			// 서버에서 작업할 것
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-		// 윤곽선 설정
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
+		OnDroped();
 		break;
 	default:
 		break;
@@ -138,39 +118,63 @@ void AWeapon::SetWeaponState(EWeaponState State)
 
 void AWeapon::OnRep_WeaponState()
 {
-	// 무기의 상태가 바뀌면 해당함수가 한번 실행된다.
-	switch (WeaponState)
+	OnWeaponStateSet();
+}
+
+void AWeapon::OnEquipped()
+{
+	ShowPickupWidget(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponType == EWeaponType::EWT_SubmachinGun)
 	{
-	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(false);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (WeaponType == EWeaponType::EWT_SubmachinGun)
-		{
-			// 서브머신건의 피직스 사용을 위해서
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		// 윤곽선 설정
-		EnableCustomDepth(false);
-		break;
-	case EWeaponState::EWS_Dropped:
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
+		// 서브머신건의 피직스 사용을 위해서
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-		// 윤곽선 설정
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(true);
-		break;
-	default:
-		break;
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	}
+	// 윤곽선 설정 OFF
+	EnableCustomDepth(false);
+}
+
+void AWeapon::OnEquippedSecondary()
+{
+	ShowPickupWidget(false);
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (WeaponType == EWeaponType::EWT_SubmachinGun)
+	{
+		// 서브머신건의 피직스 사용을 위해서
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	}
+	// 윤곽선 설정 OFF
+	EnableCustomDepth(false);
+}
+
+void AWeapon::OnDroped()
+{
+	if (HasAuthority())
+	{
+		// 서버에서 작업할 것
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	// 윤곽선 설정 ON
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
 }
 
 void AWeapon::SetHUDAmmo()

@@ -23,6 +23,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void SwapWeapon();
 	void Reload();
 	// 블루프린트 노티파이에서 실행할 함수
 	UFUNCTION(BlueprintCallable)
@@ -234,4 +235,5 @@ private:
 public:	
 	void SetMaxWalkSpeed(float Value);
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+	bool ShouldSwapWeapon();
 };
