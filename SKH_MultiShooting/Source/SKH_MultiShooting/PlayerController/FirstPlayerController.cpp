@@ -277,6 +277,11 @@ void AFirstPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		PlayerHUD->PlayerOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else
+	{
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void AFirstPlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -291,6 +296,11 @@ void AFirstPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		PlayerHUD->PlayerOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else
+	{
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 void AFirstPlayerController::PlayDefeatsAnimation()
@@ -444,6 +454,14 @@ void AFirstPlayerController::PollInit()
 				if (bInitializeDefeats)
 				{
 					SetHUDDefeats(HUDDefeats);
+				}
+				if (bInitializeWeaponAmmo)
+				{
+					SetHUDWeaponAmmo(HUDWeaponAmmo);
+				}
+				if (bInitializeCarriedAmmo)
+				{
+					SetHUDCarriedAmmo(HUDCarriedAmmo);
 				}
 
 				APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());

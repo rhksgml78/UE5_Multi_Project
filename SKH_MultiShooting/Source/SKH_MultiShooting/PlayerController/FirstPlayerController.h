@@ -125,6 +125,12 @@ private:
 	int32 HUDGrenades;
 	bool bInitializeGrenades = false; // 초기화를 했는지 확인할 변수
 
+	float HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false; // 초기화를 했는지 확인할 변수
+
+	float HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false; // 초기화를 했는지 확인할 변수
+
 public:
 	FORCEINLINE APlayerHUD* GetPlayerHUD() const { return PlayerHUD; }
 	void SetSpeedUi(bool isVisible);

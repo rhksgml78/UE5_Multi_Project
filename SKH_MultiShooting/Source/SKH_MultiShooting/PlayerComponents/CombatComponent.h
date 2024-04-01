@@ -197,7 +197,7 @@ private:
 
 	// 수류탄의 소지 갯수 관련
 	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
-	int32 Grenades = 2;
+	int32 Grenades = 3;
 
 	UFUNCTION()
 	void OnRep_Grenades();

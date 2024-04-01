@@ -57,9 +57,15 @@ public:
 	// HUD 쉴드 업데이트 함수
 	void UpdateHudShield();
 
+	// 처음무기 장착시 HUD의 탄창수 업데이트.
+	void UpdateHUDAmmo();
+
 	// HUD 스피드업 노출 함수
 	void SetSpeedUi(bool isVisible);
 	void SetSpeedUpBuff(bool isSpeedUpActive);
+
+	// 기본무기 생성 함수
+	void SpawnDefaultWeapon();
 
 protected:
 	virtual void BeginPlay() override;
@@ -251,6 +257,10 @@ private:
 	// 수류탄
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* AttachedGrenade;
+
+	// 게임 시작시 기본적으로 들고있을 무기
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

@@ -229,6 +229,10 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 기본무기 생성및 장착 후 HUD 탄창 업데이트
+	SpawnDefaultWeapon();
+	UpdateHUDAmmo();
+
 	// HUD 체력&쉴드 업데이트
 	UpdateHudHealth();
 	UpdateHudShield();
@@ -299,7 +303,14 @@ void APlayerCharacter::Elim()
 	// 무기 떨어뜨리기
 	if (Combat && Combat->EquippedWeapon)
 	{
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon)
+		{
+			Combat->EquippedWeapon->Destroy();
+		}
+		else
+		{
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 
 	// 서버에서 각 클라이언트에게 멀티캐스트 함수 호출
@@ -852,6 +863,18 @@ void APlayerCharacter::UpdateHudShield()
 	}
 }
 
+void APlayerCharacter::UpdateHUDAmmo()
+{
+	FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
+
+	if (FirstPlayerController && Combat && Combat->EquippedWeapon)
+	{
+		FirstPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		FirstPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+
+	}
+}
+
 void APlayerCharacter::PollInit()
 {
 	if (FirstPlayerState == nullptr)
@@ -967,5 +990,21 @@ void APlayerCharacter::SetSpeedUi(bool isVisible)
 	if (FirstPlayerController)
 	{
 		FirstPlayerController->SetSpeedUi(isVisible);
+	}
+}
+
+void APlayerCharacter::SpawnDefaultWeapon()
+{
+	APlayerGameMode* PlayerGameMode = Cast<APlayerGameMode>(UGameplayStatics::GetGameMode(this));
+
+	UWorld* World = GetWorld();
+	if (PlayerGameMode && World && !bElimmed && DefaultWeaponClass)
+	{
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
+		if (Combat)
+		{
+			Combat->EquipWeapon(StartingWeapon);
+		}
 	}
 }

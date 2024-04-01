@@ -75,6 +75,9 @@ public:
 	// 무기의 아웃라인 윤곽선 설정 (depth 값 사용)
 	void EnableCustomDepth(bool bEnable);
 
+	// 기본생성된 무기를 파괴하기 위한 변수 플레이어가 SpawnDefaultWeapon 함수를 호출할때 해당무기만 true 값으로 설정한다.
+	bool bDestroyWeapon = false;
+
 protected:
 	virtual void BeginPlay() override;
 
