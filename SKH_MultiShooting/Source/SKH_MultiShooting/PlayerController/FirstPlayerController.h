@@ -83,6 +83,12 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
+	// 인터넷 연결상태에 측정 관련 함수
+	void HighPingWarning();
+	void StopHighPingWarning();
+	void CheckPing(float DeltaTime);
+
+
 private:
 
 	UPROPERTY()
@@ -130,6 +136,20 @@ private:
 
 	float HUDCarriedAmmo;
 	bool bInitializeCarriedAmmo = false; // 초기화를 했는지 확인할 변수
+
+	// 플레이어의 핑을 체크 관련
+	float HighPingRunningTime = 0.f; // 애니메이션이 노출된 시간
+
+	float PingAnimationRuningTime = 0.f; // 애니메이션을 노출된 시간
+
+	UPROPERTY(EditAnywhere)
+	float HighPingDuration = 5.f; // 애니메이션을 노출할 시간
+
+	UPROPERTY(EditAnywhere)
+	float CheckPingFrequency = 20.f; // 핑을 체크하고자 하는 주기
+
+	UPROPERTY(EditAnywhere)
+	float HighPingThreshold = 50.f; // 주의 기준치가될 핑 수치
 
 public:
 	FORCEINLINE APlayerHUD* GetPlayerHUD() const { return PlayerHUD; }

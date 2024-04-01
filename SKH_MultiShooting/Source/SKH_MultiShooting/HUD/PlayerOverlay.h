@@ -48,6 +48,15 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* SpeedUpUi;
 
+	UPROPERTY(meta = (BindWidget))
+	class UImage* HighPingImage;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* HighPingText;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* HighPingAnimation;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
 

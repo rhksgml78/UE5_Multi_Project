@@ -32,11 +32,53 @@ void AFirstPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void AFirstPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// HUD의 시간을 세팅
 	SetHUDTime();
 
 	// 매프레임 동기화 시간 체크 
 	CheckTimeSync(DeltaTime);
 	PollInit();
+
+	// 플레이어의 Ping을 체크하고 관련 애니메이션을 재생
+	CheckPing(DeltaTime);
+}
+
+void AFirstPlayerController::CheckPing(float DeltaTime)
+{
+	HighPingRunningTime += DeltaTime;
+	if (HighPingRunningTime > CheckPingFrequency)
+	{
+		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
+		if (PlayerState)
+		{
+			// GetPing은 압축된 값이기때문에 1/4 정도의 값을 얻게된다.(uint8) 때문에 uint32의 값을 얻고자 4배의 값으로 얻는다.
+			if (PlayerState->GetPing() * 4 > HighPingThreshold)
+			{
+				HighPingWarning();
+				PingAnimationRuningTime = 0.f; // 초기화
+			}
+		}
+		HighPingRunningTime = 0;
+	}
+
+	bool bHighPingAnimationPlaying = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->HighPingAnimation &&
+		PlayerHUD->PlayerOverlay->IsAnimationPlaying(PlayerHUD->PlayerOverlay->HighPingAnimation);
+
+	// 핑상태주의 애니메이션이 재생중이라면
+	if (bHighPingAnimationPlaying)
+	{
+		// 재생시간을 측정하고
+		PingAnimationRuningTime += DeltaTime;
+
+		if (PingAnimationRuningTime > HighPingDuration)
+		{
+			// 기준시간을 초과하였을경우 애니메이션 정지
+			StopHighPingWarning();
+		}
+	}
 }
 
 void AFirstPlayerController::CheckTimeSync(float DeltaTime)
@@ -48,6 +90,49 @@ void AFirstPlayerController::CheckTimeSync(float DeltaTime)
 		// 동기화 시간을 계속더해주다가 지정한 시간을 넘었을때 동기화를 한번하고 0으로 초기화
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void AFirstPlayerController::HighPingWarning()
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->HighPingImage &&
+		PlayerHUD->PlayerOverlay->HighPingText &&
+		PlayerHUD->PlayerOverlay->HighPingAnimation;
+
+	if (bHUDValid)
+	{
+		PlayerHUD->PlayerOverlay->HighPingImage->SetOpacity(1.f);
+		PlayerHUD->PlayerOverlay->HighPingText->SetOpacity(1.f);
+		PlayerHUD->PlayerOverlay->PlayAnimation(
+			PlayerHUD->PlayerOverlay->HighPingAnimation,
+			0.f,
+			5
+			);
+	}
+}
+
+void AFirstPlayerController::StopHighPingWarning()
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->HighPingImage &&
+		PlayerHUD->PlayerOverlay->HighPingText &&
+		PlayerHUD->PlayerOverlay->HighPingAnimation;
+
+	if (bHUDValid)
+	{
+		PlayerHUD->PlayerOverlay->HighPingImage->SetOpacity(0.f);
+		PlayerHUD->PlayerOverlay->HighPingText->SetOpacity(0.f);
+		if (PlayerHUD->PlayerOverlay->IsAnimationPlaying(PlayerHUD->PlayerOverlay->HighPingAnimation))
+		{
+			PlayerHUD->PlayerOverlay->StopAnimation(PlayerHUD->PlayerOverlay->HighPingAnimation);
+		}
 	}
 }
 
