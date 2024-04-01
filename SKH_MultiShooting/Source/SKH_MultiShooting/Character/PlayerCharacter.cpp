@@ -503,18 +503,19 @@ void APlayerCharacter::LookUp(float Value)
 	AddControllerPitchInput(Value);
 }
 
-// 서버에서 호출
+// 호출
 void APlayerCharacter::EquipButtonPressed()
 {
 	if (bDisableGameplay) return;
 
 	if (Combat)
 	{
+		// 복제함수 호출
 		ServerEquipButtonPressed();
 	}
 }
 
-// 클라이언트에서 호출
+// 서버에서 복제하여 실행
 void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)

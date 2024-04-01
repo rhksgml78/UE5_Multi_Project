@@ -861,7 +861,11 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	// 조준 상태의 속도로 조절
 	if (Character)
 	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		if (!Character->GetIsSpeedUpBuff())
+		{
+			Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		}
+
 	}
 
 	// 플레이어가 로컬상태이고 스나이퍼라이플 무기를 장착하고있을때
@@ -877,7 +881,10 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	// 조준 상태의 속도로 조절
 	if (Character)
 	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		if (!Character->GetIsSpeedUpBuff())
+		{
+			Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+		}
 	}
 
 }
