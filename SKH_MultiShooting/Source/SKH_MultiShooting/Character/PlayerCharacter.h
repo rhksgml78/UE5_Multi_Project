@@ -105,6 +105,10 @@ protected:
 	// 캐릭터가 사망후 제자리에만 회전할 수 있는 함수
 	void RotateInPlace(float DeltaTime);
 
+	// 캐릭터사망시 소지한 아이템 처리 함수
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;

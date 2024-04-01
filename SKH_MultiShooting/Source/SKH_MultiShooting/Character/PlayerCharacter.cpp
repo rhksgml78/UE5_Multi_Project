@@ -301,17 +301,7 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 void APlayerCharacter::Elim()
 {
 	// 무기 떨어뜨리기
-	if (Combat && Combat->EquippedWeapon)
-	{
-		if (Combat->EquippedWeapon->bDestroyWeapon)
-		{
-			Combat->EquippedWeapon->Destroy();
-		}
-		else
-		{
-			Combat->EquippedWeapon->Dropped();
-		}
-	}
+	DropOrDestroyWeapons();
 
 	// 서버에서 각 클라이언트에게 멀티캐스트 함수 호출
 	MulticastElim();
@@ -321,6 +311,34 @@ void APlayerCharacter::Elim()
 		&ThisClass::ElimTimerFinishied,
 		ElimDelay
 	);
+}
+
+void APlayerCharacter::DropOrDestroyWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon)
+		{
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon)
+		{
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
+	}
+}
+
+void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else
+	{
+		Weapon->Dropped();
+	}
 }
 
 void APlayerCharacter::MulticastElim_Implementation()
