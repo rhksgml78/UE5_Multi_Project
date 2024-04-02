@@ -84,6 +84,7 @@ protected:
 	void FireHitScanWeapon();
 	void FireMultiHitScanWeapon();
 	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
+	void ShotgunLocalFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
 
 	// 서버에서만 호출 _Implementation 명시 필요
 	UFUNCTION(Server, Reliable)
@@ -92,6 +93,14 @@ protected:
 	// 서버에서 로컬로 실행 모든클라이언트에 호출
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+
+	// 서버에서만 호출 _Implementation 명시 필요
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
+
+	// 서버에서 로컬로 실행 모든클라이언트에 호출
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
 
 	// 충돌판정용
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);

@@ -13,7 +13,8 @@ class SKH_MULTISHOOTING_API AShotgun : public AHitScanWeapon
 	
 public:
 	// 발사용 함수
-	virtual void Fire(const FVector& HitTarget) override;
+	virtual void FireShotgun(const TArray<FVector_NetQuantize>& HitTargets);
+	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
 
 private:
 

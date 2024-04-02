@@ -14,6 +14,7 @@
 #include "SKH_MultiShooting/HUD/PlayerHUD.h"
 #include "SKH_MultiShooting/HUD/PlayerOverlay.h"
 #include "SKH_MultiShooting/Character/PlayerAnimInstance.h"
+#include "SKH_MultiShooting/Weapon/Shotgun.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -133,26 +134,47 @@ void UCombatComponent::Fire()
 
 void UCombatComponent::FireProjectileWeapon()
 {
-	// 플레이어본인은 바로 발사를 실행
-	LocalFire(HitTarget);
-	// 서버에 실행요청
-	ServerFire(HitTarget);
+	if (EquippedWeapon && Character)
+	{
+		// 플레이어본인은 바로 발사를 실행
+		if (!Character->HasAuthority()) LocalFire(HitTarget);
+
+		// 서버에 실행요청하고 다른플레이어의 발사 동기화
+		ServerFire(HitTarget);
+	}
 }
 
 void UCombatComponent::FireHitScanWeapon()
 {
-	if (EquippedWeapon)
+	if (EquippedWeapon && Character)
 	{
 		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
-		LocalFire(HitTarget);
+
+		// 플레이어본인은 바로 발사를 실행
+		if (!Character->HasAuthority()) LocalFire(HitTarget);
+
+		// 서버에 실행요청하고 다른플레이어의 발사 동기화
 		ServerFire(HitTarget);
 	}
-
 }
 
 void UCombatComponent::FireMultiHitScanWeapon()
 {
-
+	if (EquippedWeapon && Character)
+	{
+		AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
+		if (EquippedWeapon)
+		{
+			// 임시 배열은 샷건클래스의 해당함수내에서 샷건의 탄퍼짐 갯수만큼 추가되기 때문에 여기서 따로 추가할것은없음
+			TArray<FVector_NetQuantize> HitTargets;
+			Shotgun->ShotgunTraceEndWithScatter(HitTarget, HitTargets);
+			if (!Character->HasAuthority())
+			{
+				ShotgunLocalFire(HitTargets);
+			}
+			ServerShotgunFire(HitTargets);
+		}
+	}
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -165,33 +187,67 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 {
 	// 각 플레이어라면 리턴
 	if (Character && 
-		Character->IsLocallyControlled()) return;
+		Character->IsLocallyControlled() &&
+		!Character->HasAuthority()) return;
 
 	// 본인이아닌 다른 플레이어의 발사를 복제실행
 	LocalFire(TraceHitTarget);
 }
 
+void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTarget)
+{
+	// 서버에서 로컬로 모든클라이언트에 복제 실행
+	MulticastShotgunFire(TraceHitTarget);
+}
+
+void UCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTarget)
+{
+	// 각 플레이어라면 리턴
+	if (Character &&
+		Character->IsLocallyControlled() &&
+		!Character->HasAuthority()) return;
+
+	// 본인이아닌 다른 플레이어의 발사를 복제실행
+	ShotgunLocalFire(TraceHitTarget);
+}
+
 void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 해당함수는 서버는 직접호출하고 클라이언트는 서버를 한번 거쳐서 실행되기때문에 약간의 타임렉이 있다.
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
 
-	if (EquippedWeapon == nullptr) return;
-
-	if (Character && CombatState == ECombatState::ECS_Reloading &&
-		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
+	if (CombatState == ECombatState::ECS_Reloading && 
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher)
 	{
-		// 샷건과 유탄 발사기의 예외처리는 아래의 조건문을 실행하지않도록 실행후 바로 return
+		// 유탄 발사기의 예외처리는 아래의 조건문을 실행하지않도록 실행후 바로 return
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 		CombatState = ECombatState::ECS_Unoccupied;
 		return;
 	}
 
-	if (Character && CombatState == ECombatState::ECS_Unoccupied)
+	if (CombatState == ECombatState::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
+}
+
+void UCombatComponent::ShotgunLocalFire(const TArray<FVector_NetQuantize>& TraceHitTarget)
+{
+	// 샷건은 따로 발사 함수를 마련하였기때문에 캐스팅먼저
+	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
+
+	if (Shotgun == nullptr || Character == nullptr) return;
+
+	if (CombatState == ECombatState::ECS_Reloading ||
+		CombatState == ECombatState::ECS_Unoccupied)
+	{
+		Character->PlayFireMontage(bAiming);
+		Shotgun->FireShotgun(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
 }
 
 void UCombatComponent::StartFireTimer()
