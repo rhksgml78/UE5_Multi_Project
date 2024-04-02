@@ -17,7 +17,14 @@ enum class EWeaponState : uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
-
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScan UMETA(DisplayName = "HitScan Weapon"),
+	EFT_MultiHitScan UMETA(DisplayName = "MultiHitScan Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	EFT_MAX UMETA(DisplayName = "DefaultMAX")
+};
 
 UCLASS()
 class SKH_MULTISHOOTING_API AWeapon : public AActor
@@ -62,6 +69,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = CrossHairs)
 	class UTexture2D* CrosshairsBottom;
 
+	// 무기의 공격 타입 지정
+	UPROPERTY(EditAnywhere)
+	EFireType FireType;
+
 	// 발사관련 변수
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float FireDelay = 0.15f; // 타이머 콜 주기(BP에서 무기마다 다르게 설정하여 연사속도 조절 가능
@@ -78,6 +89,18 @@ public:
 
 	// 기본생성된 무기를 파괴하기 위한 변수 플레이어가 SpawnDefaultWeapon 함수를 호출할때 해당무기만 true 값으로 설정한다.
 	bool bDestroyWeapon = false;
+
+	// 탄퍼짐 관련
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DistanceToSphere = 800.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float SphereRadius = 75.f;
+
+	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 protected:
 	virtual void BeginPlay() override;

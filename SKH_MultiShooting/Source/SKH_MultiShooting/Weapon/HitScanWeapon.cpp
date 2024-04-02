@@ -4,8 +4,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "DrawDebugHelpers.h"
 #include "WeaponTypes.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
@@ -13,10 +11,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	Super::Fire(HitTarget);
 
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr)
-	{
-		return;
-	}
+	if (OwnerPawn == nullptr) return;
 	
 	// 모든 피격계산은 서버에서하기때문에 크라이언트에서 InstigatorController 는 항상 null이다.
 	AController* InstigatorController = OwnerPawn->GetController();
@@ -88,8 +83,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		// 탄퍼짐을 설정하였을경우 TraceEndWithScatter 계산 함수를 실행하고 아닐경우 타겟으로 일직선지점을 끝으로 계산
-		FVector End = bUseScatter? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + ((HitTarget - TraceStart) * 1.25f);
+		FVector End = TraceStart + (HitTarget - TraceStart) * 1.25f;
 
 		World->LineTraceSingleByChannel(
 			OutHit,
@@ -102,9 +96,13 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 		FVector BeamEnd = End;
 		if (OutHit.bBlockingHit)
 		{
-			// 만일 임팩트 포인트가 있다면 그곳으로 다시 저장
 			BeamEnd = OutHit.ImpactPoint;
 		}
+		else
+		{
+			OutHit.ImpactPoint = End;
+		}
+
 		// 위의 작업종료후 일직선의 빔파티클 생성
 		if (BeamParticles)
 		{
@@ -122,31 +120,11 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 				Beam->SetVectorParameter(FName("Target"), BeamEnd);
 			}
 		}
+
+		if (DebugEndSphere)
+		{
+			DrawDebugSphere(GetWorld(), BeamEnd, 16.f, 12, FColor::Orange, true);
+		}
 	}
-}
-
-FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget)
-{
-	// 일정범위내에서 탄퍼짐 구현
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-	// 생성된 원형 구역에 랜덤한 지점들을 선택한다
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-	FVector ToEndLoc = EndLoc - TraceStart;
-
-	/*
-	탄퍼짐 확인용 디버그 구체와 라인
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12.f, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12.f, FColor::Green, true);
-	DrawDebugLine(GetWorld(), 
-		TraceStart, 
-		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-		FColor::Cyan,
-		true
-		);
-	*/
-
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
 

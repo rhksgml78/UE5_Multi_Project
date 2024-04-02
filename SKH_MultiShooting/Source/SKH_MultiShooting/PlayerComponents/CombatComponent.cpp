@@ -95,15 +95,103 @@ void UCombatComponent::Fire()
 	{
 		// 작동되자마자 한번만 발사되도록 점화식 변수를 바꾸어 주도록한다. 이후 발사가끝난시점에 다시 true변경해주기.
 		bCanFire = false;
-		ServerFire(HitTarget);
+
+		/*
+		클라이언트(플레이어) 실행 흐름:
+		플레이어 발사 요청: 플레이어가 발사 버튼을 누르면, 클라이언트에서 Fire() 함수가 호출됩니다.
+		로컬 발사 처리: Fire() 함수 내에서 CanFire()를 통해 발사 가능 여부를 확인한 후, LocalFire(HitTarget)를 호출하여 로컬 플레이어에게 즉시 발사 효과를 표시합니다.
+		서버에 발사 요청: 동시에 ServerFire(HitTarget)를 호출하여 서버에 발사 동작을 요청합니다.
+
+		서버 실행 흐름:
+		발사 요청 수신 및 전파: 서버에서 ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) 함수가 호출되면, MulticastFire(TraceHitTarget)를 호출하여 모든 클라이언트에게 발사 동작을 전파합니다.
+		*/
+
 
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 0.75f;
+
+			switch (EquippedWeapon->FireType)
+			{
+			case EFireType::EFT_Projectile:
+				FireProjectileWeapon();
+				break;
+			case EFireType::EFT_HitScan:
+				FireHitScanWeapon();
+				break;
+			case EFireType::EFT_MultiHitScan:
+				FireMultiHitScanWeapon();
+				break;
+			default:
+				break;
+			}
 		}
 		StartFireTimer();
 	}
 
+}
+
+void UCombatComponent::FireProjectileWeapon()
+{
+	// 플레이어본인은 바로 발사를 실행
+	LocalFire(HitTarget);
+	// 서버에 실행요청
+	ServerFire(HitTarget);
+}
+
+void UCombatComponent::FireHitScanWeapon()
+{
+	if (EquippedWeapon)
+	{
+		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
+		LocalFire(HitTarget);
+		ServerFire(HitTarget);
+	}
+
+}
+
+void UCombatComponent::FireMultiHitScanWeapon()
+{
+
+}
+
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 서버에서 로컬로 모든클라이언트에 복제 실행
+	MulticastFire(TraceHitTarget);
+}
+
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 각 플레이어라면 리턴
+	if (Character && 
+		Character->IsLocallyControlled()) return;
+
+	// 본인이아닌 다른 플레이어의 발사를 복제실행
+	LocalFire(TraceHitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 해당함수는 서버는 직접호출하고 클라이언트는 서버를 한번 거쳐서 실행되기때문에 약간의 타임렉이 있다.
+
+	if (EquippedWeapon == nullptr) return;
+
+	if (Character && CombatState == ECombatState::ECS_Reloading &&
+		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
+	{
+		// 샷건과 유탄 발사기의 예외처리는 아래의 조건문을 실행하지않도록 실행후 바로 return
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+		return;
+	}
+
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
+	{
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+	}
 }
 
 void UCombatComponent::StartFireTimer()
@@ -131,32 +219,6 @@ void UCombatComponent::FireTimerFinished()
 	}
 	// 타이머 종료시 총알이 없다면 재장전 호출
 	ReloadEmptyWeapon();
-}
-
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	MulticastFire(TraceHitTarget);
-}
-
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	if (EquippedWeapon == nullptr) return;
-
-	if (Character && CombatState == ECombatState::ECS_Reloading &&
-		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
-	{
-		// 샷건과 유탄 발사기의 예외처리는 아래의 조건문을 실행하지않도록 실행후 바로 return
-		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(TraceHitTarget);
-		CombatState = ECombatState::ECS_Unoccupied;
-		return;
-	}
-
-	if (Character && CombatState == ECombatState::ECS_Unoccupied)
-	{
-		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(TraceHitTarget);
-	}
 }
 
 void UCombatComponent::SetMaxWalkSpeed(float Value)
@@ -224,7 +286,9 @@ void UCombatComponent::OnRep_SecondaryWeapon()
 
 void UCombatComponent::SwapWeapon()
 {
-	if (EquippedWeapon == nullptr || SecondaryWeapon == nullptr) return;
+	if (EquippedWeapon == nullptr || 
+		SecondaryWeapon == nullptr ||
+		CombatState != ECombatState::ECS_Unoccupied) return;
 
 	// 스왑 방식을 사용하여 주무기와 보조무기의 값을 변경한다.
 	AWeapon* TempWeapon = EquippedWeapon;
