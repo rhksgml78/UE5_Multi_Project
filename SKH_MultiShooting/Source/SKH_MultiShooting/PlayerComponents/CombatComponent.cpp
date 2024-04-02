@@ -581,7 +581,7 @@ void UCombatComponent::UpdateAmmoValues()
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 
-	EquippedWeapon->AddAmmo(-ReloadAmount);
+	EquippedWeapon->AddAmmo(ReloadAmount);
 }
 
 void UCombatComponent::ShotgunShellReload()
@@ -610,7 +610,7 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 
-	EquippedWeapon->AddAmmo(-1);
+	EquippedWeapon->AddAmmo(1);
 	// 샷건과 유탄발사기는 한발씩 장전할때마다 바로 쏠 수 있어야 한다
 	bCanFire = true;
 

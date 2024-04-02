@@ -165,16 +165,22 @@ private:
 	float ZoomInterpSpeed = 20.f;
 
 	// 탄창 관련
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	UPROPERTY(EditAnywhere)
 	int32 Ammo;
 
-	UFUNCTION()
-	void OnRep_Ammo();
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
+
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
 
 	void SpendRound();
 
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
+
+	// 처리되지않은 서버리퀘스트의 숫자를 위한 변수 Ammo 관련
+	int32 Sequence = 0;
 
 	UPROPERTY()
 	class APlayerCharacter* PlayerOwnerCharacter;
