@@ -129,6 +129,14 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 	// 플레이어가 리로드 상태가아니라면 ture 값이되어 FABRIK 기능을 사용한다. 반대로 플레이어가 재장전 중일때는 false 가되므로 FABRIK 기능을 OFF 시키도록 BP에서 지정.
 	bUseFABRIK = PlayerCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+
+	if (PlayerCharacter->IsLocallyControlled() && 
+		PlayerCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade)
+	{
+		bUseFABRIK = !PlayerCharacter->IsLocallyReloading();
+	}
+
 	bUseAimOffsets = PlayerCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !PlayerCharacter->GetDisableGameplay();
+
 	bTransformRightHand = PlayerCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !PlayerCharacter->GetDisableGameplay();
 }

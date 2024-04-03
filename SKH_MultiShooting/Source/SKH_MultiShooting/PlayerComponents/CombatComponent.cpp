@@ -423,6 +423,14 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 	}
 }
 
+void UCombatComponent::OnRep_Aiming()
+{
+	if (Character && Character->IsLocallyControlled())
+	{
+		bAiming = bAimButtonPressed;
+	}
+}
+
 void UCombatComponent::DropEquippedWeapon()
 {
 	if (EquippedWeapon)
@@ -526,10 +534,13 @@ void UCombatComponent::Reload()
 	if (CarriedAmmo > 0 && 
 		CombatState == ECombatState::ECS_Unoccupied && 
 		EquippedWeapon &&
-		!EquippedWeapon->IsFull())
+		!EquippedWeapon->IsFull() &&
+		!bLocallyReloading)
 	{
 		// 서버 실행 함수를 호출한다.
 		ServerReload();
+		HandleReload();
+		bLocallyReloading = true;
 	}
 }
 
@@ -539,7 +550,10 @@ void UCombatComponent::ServerReload_Implementation()
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
 	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
+	if (!Character->IsLocallyControlled())
+	{
+		HandleReload();
+	}
 }
 
 void UCombatComponent::FinishReloading()
@@ -549,6 +563,9 @@ void UCombatComponent::FinishReloading()
 	{
 		return;
 	}
+
+	bLocallyReloading = false;
+
 	if (Character->HasAuthority())
 	{
 		// 서버에서 실행
@@ -678,7 +695,10 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Reloading:
-		HandleReload();
+		if (Character && !Character->IsLocallyControlled())
+		{
+			HandleReload();
+		}
 		break;
 	case ECombatState::ECS_Unoccupied:
 		if (bFireButtonPressed)
@@ -702,7 +722,10 @@ void UCombatComponent::OnRep_CombatState()
 
 void UCombatComponent::HandleReload()
 {
-	Character->PlayReLoadMontage();
+	if (Character)
+	{
+		Character->PlayReLoadMontage();
+	}
 }
 
 int32 UCombatComponent::AmountToReload()
@@ -993,6 +1016,12 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
 	}
+
+	if (Character->IsLocallyControlled())
+	{
+		bAimButtonPressed = bIsAiming;
+	}
+
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
@@ -1013,6 +1042,8 @@ bool UCombatComponent::CanFire()
 {
 	// 장착한 무기가 없다면 false 반환
 	if (EquippedWeapon == nullptr) return false;
+
+	if (bLocallyReloading) return false;
 
 	// 샷건과 유탄발사기에 대하여 예외처리
 	if (!EquippedWeapon->IsEmpty() && bCanFire &&

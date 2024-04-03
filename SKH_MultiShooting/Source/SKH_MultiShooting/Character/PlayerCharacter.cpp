@@ -1027,3 +1027,10 @@ void APlayerCharacter::SpawnDefaultWeapon()
 		}
 	}
 }
+
+bool APlayerCharacter::IsLocallyReloading()
+{
+	if (Combat == nullptr) return false;
+
+	return Combat->bLocallyReloading;
+}
