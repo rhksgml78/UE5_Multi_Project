@@ -74,6 +74,10 @@ public:
 	박스컴포넌트의 이름은 가능하면 관절과 동일하게.
 	총 16개 관절 부위
 	*/
+
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
+
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* head;
 
@@ -121,7 +125,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* foot_r;
-
 
 protected:
 	virtual void BeginPlay() override;
@@ -179,6 +182,10 @@ private:
 	// 플레이어의 추가 능력치와 관련된 컴포넌트
 	UPROPERTY(VisibleAnywhere)
 	class UBuffComponent* Buff;
+
+	// 서버에서 지연보상에 사용할 컴포넌트
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;

@@ -19,6 +19,36 @@
 가방 비용이높은것은 메쉬단위 = 정확한 캐릭터형태충돌은 매우비싸다!
 */
 
+USTRUCT(BlueprintType)
+struct FBoxInformation
+{
+	// 플레이어에 배치된 박스의 정보를 담는 구조체
+
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FVector Location;
+
+	UPROPERTY()
+	FRotator Rotation;
+
+	UPROPERTY()
+	FVector BoxExtent;
+};
+
+USTRUCT(BlueprintType)
+struct FFramepackage
+{
+	// 프레임 패키지는 플레이어의 모든 박스컴포넌트의 정보를 저장 이때 GC 가비지 컬렉션의 보조를 받기 위해서 UPROPERTY 의 매크로를 선언한다.
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Time;
+
+	UPROPERTY()
+	TMap<FName, FBoxInformation> HitBoxInfo;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 {
@@ -26,10 +56,22 @@ class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 
 public:	
 	ULagCompensationComponent();
+	friend class APlayerCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void ShowFramePackage(const FFramepackage& Package, const FColor& Color);
 
 protected:
 	virtual void BeginPlay() override;
+
+	// 데이터를 저장하는 함수
+	void SaveFramePackage(FFramepackage& Package);
+
+private:
+	UPROPERTY()
+	APlayerCharacter* Character;
+
+	UPROPERTY()
+	class AFirstPlayerController* Controller;
 
 public:	
 
