@@ -23,7 +23,6 @@ USTRUCT(BlueprintType)
 struct FBoxInformation
 {
 	// 플레이어에 배치된 박스의 정보를 담는 구조체
-
 	GENERATED_BODY()
 
 	UPROPERTY()
@@ -49,21 +48,30 @@ struct FFramePackage
 	TMap<FName, FBoxInformation> HitBoxInfo;
 };
 
+USTRUCT(BlueprintType)
+struct FServerSideRewindResult
+{
+	// 플레이어가 피격을했는지, 해당피격이 헤드샷인지
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bHitConfirmed;
+
+	UPROPERTY()
+	bool bHeadShot;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	friend class APlayerCharacter;
-
 	ULagCompensationComponent();
-
+	friend class APlayerCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
-
-	void ServerSideRewind(class APlayerCharacter* HitCharcter, 
+	FServerSideRewindResult ServerSideRewind(APlayerCharacter* HitCharcter,
 		const FVector_NetQuantize& TraceStart, 
 		const FVector_NetQuantize& HitLocation, 
 		float HitTime);
@@ -76,6 +84,19 @@ protected:
 
 	// 보간용 함수
 	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFrame, float HitTime);
+
+	FServerSideRewindResult ConfirmHit(const FFramePackage& Package,
+		APlayerCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize& HitLocation);
+
+	void CacheBoxPositions(APlayerCharacter* HitCharacter, FFramePackage& OutFramePackage);
+
+	void MoveBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package);
+
+	void ResetHitBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package);
+
+	void EnableCharacterMeshCollision(APlayerCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 
 private:
 	UPROPERTY()
