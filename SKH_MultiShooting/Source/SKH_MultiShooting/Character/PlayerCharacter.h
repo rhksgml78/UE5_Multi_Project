@@ -67,6 +67,62 @@ public:
 	// 기본무기 생성 함수
 	void SpawnDefaultWeapon();
 
+	/*
+	서버의 되감기용 박스 충돌체 생성.
+	각 충돌체는 단순박스이므로 비용이 크게 높지않다.
+	때문에 주요 관절마다 배치.
+	박스컴포넌트의 이름은 가능하면 관절과 동일하게.
+	총 16개 관절 부위
+	*/
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* thigh_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* foot_r;
+
+
 protected:
 	virtual void BeginPlay() override;
 
