@@ -73,6 +73,12 @@ private:
 	UPROPERTY()
 	class AFirstPlayerController* Controller;
 
+	// 양방향연결리스트는 BP에서노출되지않는다 오로지 C++ 코드사용
+	TDoubleLinkedList<FFramepackage> FrameHistory;
+
+	UPROPERTY(EditAnywhere)
+	float MaxRecordTime = 4.f;
+
 public:	
 
 		

@@ -13,16 +13,39 @@ void ULagCompensationComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FFramepackage Package;
-	SaveFramePackage(Package);
-	ShowFramePackage(Package, FColor::Orange);
 	
 }
 
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (FrameHistory.Num() <= 1)
+	{
+		// 양방향 연결리스트가 비어있을경우 0,1 배열 즉 헤드와 테일이 없을경우 2번 리스트에 추가하여 헤드와 테일을 추가한다.
+		FFramepackage ThisFrame;
+		SaveFramePackage(ThisFrame);
+		FrameHistory.AddHead(ThisFrame);
+	}
+	else
+	{
+		// 헤드와 테일이 있을경우 처음(헤드)에 저장된 시간과 끝(테일)에 저장된 시간의 차이를 확인하고 지정한 최대 시간을 넘어 설 경우
+		float HistoryLength = FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
+		while (HistoryLength > MaxRecordTime)
+		{
+			// 제일이전에 저장된(테일)노드를 제거하고
+			FrameHistory.RemoveNode(FrameHistory.GetTail());
 
+			// 시간의 차이를 다시 측정한다.
+			HistoryLength = FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
+		}
+
+		// 반복문의 조건에 맞지 않을때에는 계속해서 최신노드(헤드)를 갱신해가며 추가한다.
+		FFramepackage ThisFrame;
+		SaveFramePackage(ThisFrame);
+		FrameHistory.AddHead(ThisFrame);
+
+		ShowFramePackage(ThisFrame, FColor::Red);
+	}
 }
 
 void ULagCompensationComponent::SaveFramePackage(FFramepackage& Package)
@@ -56,7 +79,8 @@ void ULagCompensationComponent::ShowFramePackage(const FFramepackage& Package, c
 			BoxInfo.Value.BoxExtent,
 			FQuat(BoxInfo.Value.Rotation),
 			Color,
-			true
+			false,
+			4.f
 		);
 	}
 }
