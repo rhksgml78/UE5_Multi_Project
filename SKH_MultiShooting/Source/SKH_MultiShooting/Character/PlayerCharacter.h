@@ -269,7 +269,6 @@ private:
 	UFUNCTION()
 	void OnRep_Shield(float LastShield); // 복제변수가사용될 함수
 
-
 	UPROPERTY()
 	class AFirstPlayerController* FirstPlayerController;
 
@@ -359,4 +358,5 @@ public:
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	FORCEINLINE bool GetIsSpeedUpBuff() { return SpeedUpBuff; }
 	bool IsLocallyReloading();
+	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 };

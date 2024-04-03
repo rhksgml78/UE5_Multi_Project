@@ -37,7 +37,7 @@ struct FBoxInformation
 };
 
 USTRUCT(BlueprintType)
-struct FFramepackage
+struct FFramePackage
 {
 	// 프레임 패키지는 플레이어의 모든 박스컴포넌트의 정보를 저장 이때 GC 가비지 컬렉션의 보조를 받기 위해서 UPROPERTY 의 매크로를 선언한다.
 	GENERATED_BODY()
@@ -55,16 +55,27 @@ class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	ULagCompensationComponent();
 	friend class APlayerCharacter;
+
+	ULagCompensationComponent();
+
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void ShowFramePackage(const FFramepackage& Package, const FColor& Color);
+
+	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
+
+	void ServerSideRewind(class APlayerCharacter* HitCharcter, 
+		const FVector_NetQuantize& TraceStart, 
+		const FVector_NetQuantize& HitLocation, 
+		float HitTime);
 
 protected:
 	virtual void BeginPlay() override;
 
 	// 데이터를 저장하는 함수
-	void SaveFramePackage(FFramepackage& Package);
+	void SaveFramePackage(FFramePackage& Package);
+
+	// 보간용 함수
+	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFrame, float HitTime);
 
 private:
 	UPROPERTY()
@@ -74,10 +85,10 @@ private:
 	class AFirstPlayerController* Controller;
 
 	// 양방향연결리스트는 BP에서노출되지않는다 오로지 C++ 코드사용
-	TDoubleLinkedList<FFramepackage> FrameHistory;
+	TDoubleLinkedList<FFramePackage> FrameHistory;
 
 	UPROPERTY(EditAnywhere)
-	float MaxRecordTime = 4.f;
+	float MaxRecordTime = 2.f;
 
 public:	
 
