@@ -47,6 +47,8 @@ public:
 	// 게임이 종료시간이 되었을때 쿨다운상태에서 실행
 	void HandleCooldown();
 
+	// 서버와 클라이언트간에 동기화 예측시간의 반
+	float SingleTripTime = 0.f;
 
 protected:
 	virtual void BeginPlay() override;

@@ -1,8 +1,10 @@
 #include "LagCompensationComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
-#include "Components/BoxComponent.h"
+#include "SKH_MultiShooting/Weapon/Weapon.h"
 #include "DrawDebugHelpers.h"
-#include "Components/BoxComponent.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -13,13 +15,21 @@ ULagCompensationComponent::ULagCompensationComponent()
 void ULagCompensationComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
 }
 
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// 서버되감기 기능은 서버에서만 사용할 것이다.
+	SaveFramePackage();
+}
+
+void ULagCompensationComponent::SaveFramePackage()
+{
+	if (Character == nullptr || !Character->HasAuthority()) return;
+
 	if (FrameHistory.Num() <= 1)
 	{
 		// 양방향 연결리스트가 비어있을경우 0,1 배열 즉 헤드와 테일이 없을경우 2번 리스트에 추가하여 헤드와 테일을 추가한다.
@@ -45,7 +55,7 @@ void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		SaveFramePackage(ThisFrame);
 		FrameHistory.AddHead(ThisFrame);
 
-		ShowFramePackage(ThisFrame, FColor::Red);
+		//ShowFramePackage(ThisFrame, FColor::Red);
 	}
 }
 
@@ -185,6 +195,22 @@ FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(APlayerChara
 	return ConfirmHit(FrameToCheck, HitCharcter, TraceStart, HitLocation);
 }
 
+void ULagCompensationComponent::ServerScoreRequest_Implementation(APlayerCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser)
+{
+	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
+
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
+	{
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			DamageCauser->GetDamage(),
+			Character->Controller,
+			DamageCauser,
+			UDamageType::StaticClass()
+		);
+	}
+}
+
 FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, APlayerCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
 {
 	if (HitCharacter == nullptr) return FServerSideRewindResult();
@@ -302,3 +328,4 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(APlayerCharacter* H
 		HitCharacter->GetMesh()->SetCollisionEnabled(CollisionEnabled);
 	}
 }
+

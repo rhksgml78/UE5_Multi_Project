@@ -5,6 +5,8 @@
 #include "particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "WeaponTypes.h"
+#include "SKH_MultiShooting/PlayerComponents/LagCompensationComponent.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -28,16 +30,40 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
 		APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(FireHit.GetActor());
-		if (PlayerCharacter && HasAuthority() && InstigatorController)
+		if (PlayerCharacter && InstigatorController)
 		{
-			// 컨트롤러는 서버에서만 값을 가지고있으며 클라이언트에서는 null을 반환한다 따라서 해당 조건문은 플레이어 캐릭터 && 서버 && 서버 의 조건문으로 무조건 서버에서만 하는 작업이 된다. 데미지 계산은 서버에서만 한다.
-			UGameplayStatics::ApplyDamage(
-				PlayerCharacter,
-				Damage,
-				InstigatorController,
-				this,
-				UDamageType::StaticClass()
-			);
+			if (HasAuthority() && !bUseServerSideRewind)
+			{
+				// 컨트롤러는 서버에서만 값을 가지고있으며 클라이언트에서는 null을 반환한다 따라서 해당 조건문은 플레이어 캐릭터 && 서버 && 서버 의 조건문으로 무조건 서버에서만 하는 작업이 된다. 데미지 계산은 서버에서만 한다.
+				UGameplayStatics::ApplyDamage(
+					PlayerCharacter,
+					Damage,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+				);
+			}
+			else if (!HasAuthority() && bUseServerSideRewind)
+			{
+				// 클라이언트에서는 서버되감기를 실행할 수 있다.
+				PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(OwnerPawn) : PlayerOwnerCharacter;
+
+				PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(InstigatorController) : PlayerOwnerController;
+				
+				if (PlayerOwnerController && 
+					PlayerOwnerCharacter &&
+					PlayerOwnerCharacter->GetLagCompensation())
+				{
+					PlayerOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						PlayerCharacter,
+						Start,
+						HitTarget,
+						PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime,
+						this
+					);
+				}
+			}
+	
 		}
 		if (ImpactParticles)
 		{

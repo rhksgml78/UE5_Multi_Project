@@ -68,13 +68,26 @@ class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 
 public:	
 	ULagCompensationComponent();
+
 	friend class APlayerCharacter;
+
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
-	FServerSideRewindResult ServerSideRewind(APlayerCharacter* HitCharcter,
+
+	FServerSideRewindResult ServerSideRewind(
+		APlayerCharacter* HitCharcter,
 		const FVector_NetQuantize& TraceStart, 
 		const FVector_NetQuantize& HitLocation, 
 		float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerScoreRequest(
+		APlayerCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize& HitLocation,
+		float HitTime,
+		class AWeapon* DamageCauser
+	);
 
 protected:
 	virtual void BeginPlay() override;
@@ -97,6 +110,8 @@ protected:
 	void ResetHitBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package);
 
 	void EnableCharacterMeshCollision(APlayerCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
+
+	void SaveFramePackage();
 
 private:
 	UPROPERTY()

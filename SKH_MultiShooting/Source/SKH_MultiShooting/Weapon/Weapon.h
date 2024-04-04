@@ -130,6 +130,18 @@ protected:
 		int32 OtherBodyIndex
 	);
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 10.f;
+
+	UPROPERTY(EditAnywhere)
+	bool bUseServerSideRewind = false;
+
+	UPROPERTY()
+	class APlayerCharacter* PlayerOwnerCharacter;
+
+	UPROPERTY()
+	class AFirstPlayerController* PlayerOwnerController;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	USkeletalMeshComponent* WeaponMesh;
@@ -182,12 +194,6 @@ private:
 	// 처리되지않은 서버리퀘스트의 숫자를 위한 변수 Ammo 관련
 	int32 Sequence = 0;
 
-	UPROPERTY()
-	class APlayerCharacter* PlayerOwnerCharacter;
-
-	UPROPERTY()
-	class AFirstPlayerController* PlayerOwnerController;
-
 	// 무기의 타입을 지정
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
@@ -209,5 +215,6 @@ public:
 	// 위부에서 탄약갯수를 얻을 수 있도록
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	FORCEINLINE float GetDamage() const { return Damage; }
 
 };
