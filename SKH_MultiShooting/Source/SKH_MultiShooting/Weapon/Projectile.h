@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000;
 
+	// 데미지 관련
+	float Damage = 20.f;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -46,10 +49,6 @@ protected:
 
 	// 범위 공격
 	void ExplodeDamage();
-
-	// 데미지 관련
-	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
 
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* StaticMeshComponent;
