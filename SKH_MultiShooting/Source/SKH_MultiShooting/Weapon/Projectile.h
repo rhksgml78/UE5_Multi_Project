@@ -19,6 +19,15 @@ public:
 	// 파괴 함수
 	virtual void Destroyed() override;
 
+	// 서버측 되감기
+	bool bUseServerSideRewind = false;
+	FVector_NetQuantize TraceStart;
+	// 넷퀀타이즈100은 일반보다 소수점2자리수 더 정확
+	FVector_NetQuantize100 InitialVelocity;
+
+	UPROPERTY(EditAnywhere)
+	float InitialSpeed = 15000;
+
 protected:
 	virtual void BeginPlay() override;
 

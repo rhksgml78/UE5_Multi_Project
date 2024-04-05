@@ -1,13 +1,37 @@
 #include "ProjectileBullet.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
-//#include "GameFramework/ProjectileMovementComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectileBullet::AProjectileBullet()
 {
 	//ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	//ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	//ProjectileMovementComponent->SetIsReplicated(true);
+
+	ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+	ProjectileMovementComponent->MaxSpeed = InitialSpeed;
+}
+
+void AProjectileBullet::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FPredictProjectilePathParams PathParms;
+	PathParms.bTraceWithChannel = true;
+	PathParms.bTraceWithCollision = true;
+	PathParms.DrawDebugTime = 5.f;
+	PathParms.DrawDebugType = EDrawDebugTrace::ForDuration;
+	PathParms.LaunchVelocity = GetActorForwardVector() * InitialSpeed;
+	PathParms.MaxSimTime = 4.f;
+	PathParms.ProjectileRadius = 5.f;
+	PathParms.SimFrequency = 30.f;
+	PathParms.StartLocation = GetActorLocation();
+	PathParms.TraceChannel = ECollisionChannel::ECC_Visibility;
+	PathParms.ActorsToIgnore.Add(this);
+
+	FPredictProjectilePathResult PathResult;
+	UGameplayStatics::PredictProjectilePath(this, PathParms, PathResult);
 }
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
