@@ -1,12 +1,12 @@
 #include "HitScanWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "SKH_MultiShooting/Character/PlayerCharacter.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "WeaponTypes.h"
 #include "SKH_MultiShooting/PlayerComponents/LagCompensationComponent.h"
-#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -52,7 +52,8 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 				
 				if (PlayerOwnerController && 
 					PlayerOwnerCharacter &&
-					PlayerOwnerCharacter->GetLagCompensation())
+					PlayerOwnerCharacter->GetLagCompensation() && 
+					PlayerOwnerCharacter->IsLocallyControlled())
 				{
 					PlayerOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
 						PlayerCharacter,

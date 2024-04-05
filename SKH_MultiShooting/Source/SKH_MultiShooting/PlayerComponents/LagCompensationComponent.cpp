@@ -66,7 +66,7 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 	{
 		// 현프로젝트에서 서버와 클라이언트는 RTT를 계산하고 시간을 동기화 하기 때문에 단순히 월드상의 타임을 얻어 사용한다.
 		Package.Time = GetWorld()->GetTimeSeconds();
-
+		Package.Character = Character;
 		for (auto& BoxPair : Character->HitCollisionBoxes)
 		{
 			FBoxInformation BoxInformation;
@@ -80,7 +80,10 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 	}
 }
 
-FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFrame, float HitTime)
+FFramePackage ULagCompensationComponent::InterpBetweenFrames(
+	const FFramePackage& OlderFrame, 
+	const FFramePackage& YoungerFrame, 
+	float HitTime)
 {
 	const float Distance = YoungerFrame.Time - OlderFrame.Time;
 	const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.f, 1.f);
@@ -130,28 +133,54 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, c
 	}
 }
 
-FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(APlayerCharacter* HitCharcter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
+FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(
+	APlayerCharacter* HitCharacter, 
+	const FVector_NetQuantize& TraceStart, 
+	const FVector_NetQuantize& HitLocation, 
+	float HitTime)
+{
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
+
+	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+}
+
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(
+	const TArray<APlayerCharacter*>& HitCharacters,
+	const FVector_NetQuantize& TraceStart,
+	const TArray<FVector_NetQuantize>& HitLocations,
+	float HitTime)
+{
+	TArray<FFramePackage> FramesToCheck;
+	for (APlayerCharacter* HitCharcter : HitCharacters)
+	{
+		// 프레임체크및 보간까지 완료하여 배열에 저장
+		FramesToCheck.Add(GetFrameToCheck(HitCharcter, HitTime));
+	}
+	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
+}
+
+FFramePackage ULagCompensationComponent::GetFrameToCheck(APlayerCharacter* HitCharacter, float HitTime)
 {
 	bool bReturn =
-		HitCharcter == nullptr ||
-		HitCharcter->GetLagCompensation() == nullptr ||
-		HitCharcter->GetLagCompensation()->FrameHistory.GetHead() == nullptr ||
-		HitCharcter->GetLagCompensation()->FrameHistory.GetTail() == nullptr;
+		HitCharacter == nullptr ||
+		HitCharacter->GetLagCompensation() == nullptr ||
+		HitCharacter->GetLagCompensation()->FrameHistory.GetHead() == nullptr ||
+		HitCharacter->GetLagCompensation()->FrameHistory.GetTail() == nullptr;
 
-	if (bReturn) return FServerSideRewindResult();
+	if (bReturn) return FFramePackage();
 
 	// 피격을 확인하기위한 프레임페키지
 	FFramePackage FrameToCheck;
 	bool bShouldInterpolate = true;
 
 	// 공격을 당한 플레이어
-	const TDoubleLinkedList<FFramePackage>& History = HitCharcter->GetLagCompensation()->FrameHistory;
+	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensation()->FrameHistory;
 	const float OldestHistoryTime = History.GetTail()->GetValue().Time;
 	const float NewestHistoryTime = History.GetHead()->GetValue().Time;
 
 	if (OldestHistoryTime > HitTime)
 	{
-		return FServerSideRewindResult();
+		return FFramePackage();
 	}
 	if (OldestHistoryTime == HitTime)
 	{
@@ -191,11 +220,16 @@ FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(APlayerChara
 		// 오랜정보와 최근정보사이에서 보간해야함.
 		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 	}
-
-	return ConfirmHit(FrameToCheck, HitCharcter, TraceStart, HitLocation);
+	FrameToCheck.Character = HitCharacter;
+	return FrameToCheck;
 }
 
-void ULagCompensationComponent::ServerScoreRequest_Implementation(APlayerCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser)
+void ULagCompensationComponent::ServerScoreRequest_Implementation(
+	APlayerCharacter* HitCharacter, 
+	const FVector_NetQuantize& TraceStart, 
+	const FVector_NetQuantize& HitLocation, 
+	float HitTime, 
+	class AWeapon* DamageCauser)
 {
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 
@@ -211,7 +245,46 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(APlayerCharact
 	}
 }
 
-FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, APlayerCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
+void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
+	const TArray<APlayerCharacter*>& HitCharacters, 
+	const FVector_NetQuantize& TraceStart, 
+	const TArray<FVector_NetQuantize>& HitLocations, 
+	float HitTime)
+{
+	FShotgunServerSideRewindResult Confirm = ShotgunServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
+
+	for (auto& HitCharacter : HitCharacters)
+	{
+		// 피격당한 플레이어가없거나 무기가 없을경우 다음반복문을 실행
+		if (HitCharacter == nullptr || HitCharacter->GetEquippedWeapon() == nullptr || Character == nullptr) continue;
+
+		float TotalDamage = 0.f;
+
+		if (Confirm.HeadShots.Contains(HitCharacter))
+		{
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += HeadShotDamage;
+		}
+		if (Confirm.BodyShots.Contains(HitCharacter))
+		{
+			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += BodyShotDamage;
+		}
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			TotalDamage,
+			Character->Controller,
+			Character->GetEquippedWeapon(),
+			UDamageType::StaticClass()
+		);
+	}
+}
+
+FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
+	const FFramePackage& Package, 
+	APlayerCharacter* HitCharacter, 
+	const FVector_NetQuantize& TraceStart, 
+	const FVector_NetQuantize& HitLocation)
 {
 	if (HitCharacter == nullptr) return FServerSideRewindResult();
 
@@ -269,10 +342,133 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 		}
 	}
 
-	// 피격당하지 않았을경우 모두 false 반환
+	// 충돌박스를 리셋
 	ResetHitBoxes(HitCharacter, CurrentFrame);
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+
+	// 피격당하지 않았을경우 모두 false 반환
 	return FServerSideRewindResult{ false, false };
+}
+
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
+	const TArray<FFramePackage>& FramePackages,
+	const FVector_NetQuantize& TraceStart,
+	const TArray<FVector_NetQuantize>& HitLocations)
+{
+	for (auto& Frame : FramePackages)
+	{
+		// 반복문이 해당 함수에서 꾀 많이 이루어지기때문에 빠르게 종료할수도있는 조건을 만들어 조건에 해당하지않는다면 많은 반복문을 실행하지 않도록 방지
+		if (Frame.Character == nullptr) return FShotgunServerSideRewindResult();
+	}
+
+	FShotgunServerSideRewindResult ShotgunResult;
+	TArray<FFramePackage> CurrentFrames;
+	for (auto& Frame : FramePackages)
+	{
+		FFramePackage CurrentFrame;
+		CurrentFrame.Character = Frame.Character;
+		CacheBoxPositions(Frame.Character, CurrentFrame);
+		MoveBoxes(Frame.Character, Frame);
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
+		CurrentFrames.Add(CurrentFrame);
+	}
+
+	for (auto& Frame : FramePackages)
+	{
+		// 플레이어의 되감기용 히트박스는 콜리전이 OFF상태이기때문에 켜야함
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("Head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		HeadBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	}
+
+	UWorld* World = GetWorld();
+
+	// 헤드샷 체크하기
+	for (auto& HitLocation : HitLocations)
+	{
+		// 라인트레이스 진행
+		FHitResult ConfirmHitResult;
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+		if (World)
+		{
+			World->LineTraceSingleByChannel(
+				ConfirmHitResult,
+				TraceStart,
+				TraceEnd,
+				ECollisionChannel::ECC_Visibility
+			);
+			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(ConfirmHitResult.GetActor());
+			if (PlayerCharacter)
+			{
+				if (ShotgunResult.HeadShots.Contains(PlayerCharacter))
+				{
+					// 배열에 이미 피격 기록이있다면 피격횟수 증가
+					ShotgunResult.HeadShots[PlayerCharacter]++;
+				}
+				else
+				{
+					// 처음 피격이라면 피격횟수 1로 배열에 추가
+					ShotgunResult.HeadShots.Emplace(PlayerCharacter, 1);
+				}
+			}
+		}
+	}
+
+	// 머리가아닌 다른 부위의 충돌박스를 켜주고
+	for (auto& Frame : FramePackages)
+	{
+		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		{
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+			}
+		}
+		// 머리외의 부위는 충돌박스를 켜고 머리는 이미 피격확인을 하였기 때문에 꺼야함
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("Head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// 바디샷 체크하기
+	for (auto& HitLocation : HitLocations)
+	{
+		// 라인트레이스 진행
+		FHitResult ConfirmHitResult;
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+		if (World)
+		{
+			World->LineTraceSingleByChannel(
+				ConfirmHitResult,
+				TraceStart,
+				TraceEnd,
+				ECollisionChannel::ECC_Visibility
+			);
+			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(ConfirmHitResult.GetActor());
+			if (PlayerCharacter)
+			{
+				if (ShotgunResult.BodyShots.Contains(PlayerCharacter))
+				{
+					// 배열에 이미 피격 기록이있다면 피격횟수 증가
+					ShotgunResult.BodyShots[PlayerCharacter]++;
+				}
+				else
+				{
+					// 처음 피격이라면 피격횟수 1로 배열에 추가
+					ShotgunResult.BodyShots.Emplace(PlayerCharacter, 1);
+				}
+			}
+		}
+	}
+
+	// 충돌박스를 리셋
+	for (auto& Frame : CurrentFrames)
+	{
+		ResetHitBoxes(Frame.Character, Frame);
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::QueryAndPhysics);
+	}
+
+	return ShotgunResult;
 }
 
 void ULagCompensationComponent::CacheBoxPositions(APlayerCharacter* HitCharacter, FFramePackage& OutFramePackage)

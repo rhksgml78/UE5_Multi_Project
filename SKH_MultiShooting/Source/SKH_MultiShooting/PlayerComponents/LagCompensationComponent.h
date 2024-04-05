@@ -46,6 +46,9 @@ struct FFramePackage
 
 	UPROPERTY()
 	TMap<FName, FBoxInformation> HitBoxInfo;
+
+	UPROPERTY()
+	APlayerCharacter* Character;
 };
 
 USTRUCT(BlueprintType)
@@ -61,6 +64,20 @@ struct FServerSideRewindResult
 	bool bHeadShot;
 };
 
+USTRUCT(BlueprintType)
+struct FShotgunServerSideRewindResult
+{
+	// 플레이어가 피격을했는지, 해당피격이 헤드샷인지 (샷건용)
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TMap<APlayerCharacter*, uint32> HeadShots;
+
+	UPROPERTY()
+	TMap<APlayerCharacter*, uint32> BodyShots;
+};
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SKH_MULTISHOOTING_API ULagCompensationComponent : public UActorComponent
 {
@@ -74,8 +91,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 
+	// 일반 히트스캔용 되감기
 	FServerSideRewindResult ServerSideRewind(
-		APlayerCharacter* HitCharcter,
+		APlayerCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart, 
 		const FVector_NetQuantize& HitLocation, 
 		float HitTime);
@@ -88,6 +106,20 @@ public:
 		float HitTime,
 		class AWeapon* DamageCauser
 	);
+
+	// 샷건용 되감기
+	FShotgunServerSideRewindResult ShotgunServerSideRewind(
+		const TArray<APlayerCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
+		float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void ShotgunServerScoreRequest(
+		const TArray<APlayerCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
+		float HitTime);
 
 protected:
 	virtual void BeginPlay() override;
@@ -112,6 +144,14 @@ protected:
 	void EnableCharacterMeshCollision(APlayerCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 
 	void SaveFramePackage();
+
+	FFramePackage GetFrameToCheck(APlayerCharacter* HitCharacter, float HitTime);
+
+	// 샷건용 피격판정 확인
+	FShotgunServerSideRewindResult ShotgunConfirmHit(
+		const TArray<FFramePackage>& FramePackages, 
+		const FVector_NetQuantize& TraceStart, 
+		const TArray<FVector_NetQuantize>& HitLocations);
 
 private:
 	UPROPERTY()
