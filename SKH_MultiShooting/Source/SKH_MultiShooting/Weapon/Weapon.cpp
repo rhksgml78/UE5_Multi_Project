@@ -219,8 +219,8 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 void AWeapon::AddAmmo(int32 AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
 	ClientAddAmmo(AmmoToAdd);
+	SetHUDAmmo();
 }
 
 void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
@@ -237,6 +237,7 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 	{
 		PlayerOwnerCharacter->GetCombat()->JumpToShotgunEnd();
 	}
+	SetHUDAmmo();
 }
 
 void AWeapon::SetHUDAmmo()

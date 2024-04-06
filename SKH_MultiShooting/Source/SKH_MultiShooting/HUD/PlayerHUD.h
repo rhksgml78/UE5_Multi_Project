@@ -12,10 +12,19 @@ struct FHUDPackage
 
 public:
 	// 크로스헤어의 각 부분에 그려지는 텍스처
+	UPROPERTY()
 	class UTexture2D* CrossHairCenter;
+
+	UPROPERTY()
 	class UTexture2D* CrossHairLeft;
+
+	UPROPERTY()
 	class UTexture2D* CrossHairRight;
+
+	UPROPERTY()
 	class UTexture2D* CrossHairTop;
+
+	UPROPERTY()
 	class UTexture2D* CrossHairBottom;
 
 	// 크로스헤어를 벌어지게하는 변수

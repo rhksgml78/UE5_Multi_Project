@@ -983,7 +983,6 @@ void APlayerCharacter::UpdateHUDAmmo()
 	{
 		FirstPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
 		FirstPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
-
 	}
 }
 

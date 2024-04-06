@@ -91,6 +91,20 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 
+	// 투사체 발사 되감기
+	FServerSideRewindResult ProjectileServerSideRewind(
+		APlayerCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(
+		APlayerCharacter* HitCharacter, 
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
+
 	// 일반 히트스캔용 되감기
 	FServerSideRewindResult ServerSideRewind(
 		APlayerCharacter* HitCharacter,
@@ -104,10 +118,9 @@ public:
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime,
-		class AWeapon* DamageCauser
-	);
+		class AWeapon* DamageCauser);
 
-	// 샷건용 되감기
+	// 샷건 히트스캔용 되감기
 	FShotgunServerSideRewindResult ShotgunServerSideRewind(
 		const TArray<APlayerCharacter*>& HitCharacters,
 		const FVector_NetQuantize& TraceStart,
@@ -130,11 +143,6 @@ protected:
 	// 보간용 함수
 	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFrame, float HitTime);
 
-	FServerSideRewindResult ConfirmHit(const FFramePackage& Package,
-		APlayerCharacter* HitCharacter,
-		const FVector_NetQuantize& TraceStart,
-		const FVector_NetQuantize& HitLocation);
-
 	void CacheBoxPositions(APlayerCharacter* HitCharacter, FFramePackage& OutFramePackage);
 
 	void MoveBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package);
@@ -146,6 +154,21 @@ protected:
 	void SaveFramePackage();
 
 	FFramePackage GetFrameToCheck(APlayerCharacter* HitCharacter, float HitTime);
+
+	// 투사체용 피격확인
+	FServerSideRewindResult ProjectileConfirmHit(
+		const FFramePackage& Package, 
+		APlayerCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
+
+	// 일반 히트스캔용 피격판정 확인
+	FServerSideRewindResult ConfirmHit(
+		const FFramePackage& Package,
+		APlayerCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize& HitLocation);
 
 	// 샷건용 피격판정 확인
 	FShotgunServerSideRewindResult ShotgunConfirmHit(

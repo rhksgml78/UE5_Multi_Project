@@ -1,7 +1,9 @@
 #include "ProjectileBullet.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "SKH_MultiShooting/Character/PlayerCharacter.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
+#include "SKH_MultiShooting/PlayerComponents/LagCompensationComponent.h"
 
 AProjectileBullet::AProjectileBullet()
 {
@@ -35,6 +37,7 @@ void AProjectileBullet::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/* 투사체 경로 그리기
 	FPredictProjectilePathParams PathParms;
 	PathParms.bTraceWithChannel = true;
 	PathParms.bTraceWithCollision = true;
@@ -50,20 +53,46 @@ void AProjectileBullet::BeginPlay()
 
 	FPredictProjectilePathResult PathResult;
 	UGameplayStatics::PredictProjectilePath(this, PathParms, PathResult);
+	*/
 }
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	APlayerCharacter* OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
 	if (OwnerCharacter)
 	{
-		AController* OwnerController = OwnerCharacter->Controller;
+		// 서버측되감기 SSR 을 사용하기위하여 구조 개선
+
+		AFirstPlayerController* OwnerController = Cast<AFirstPlayerController>(OwnerCharacter->Controller);
 		if (OwnerController)
 		{
-			UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+			if (OwnerCharacter->HasAuthority() && 
+				!bUseServerSideRewind)
+			{
+				// 서버, SSR사용 안함
+
+				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+				
+				// 상속받은 히트 이벤트 에서 Destroy 가 실행되므로 나중에 실행시킨다.
+				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+				return;
+			}
+			
+			APlayerCharacter* HitCharacter = Cast<APlayerCharacter>(OtherActor);
+			if (bUseServerSideRewind && 
+				OwnerCharacter->GetLagCompensation() && 
+				OwnerCharacter->IsLocallyControlled() && 
+				HitCharacter)
+			{
+				// SSR 사용, 플레이어 렉보상 컴포넌트 소지, 로컬컨트롤러
+
+				OwnerCharacter->GetLagCompensation()->ProjectileServerScoreRequest(
+					HitCharacter, 
+					TraceStart, 
+					InitialVelocity, 
+					OwnerController->GetServerTime() - OwnerController->SingleTripTime);
+			}
 		}
 	}
-
-	// 상속받은 히트 이벤트 에서 Destroy 가 실행되므로 나중에 실행시킨다.
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }

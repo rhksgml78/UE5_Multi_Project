@@ -45,7 +45,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 				{
 					// 서버, 다른 유저는 복제되지 않은 투사체를 스폰한다. 서버측 되감기 사용 X
 					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TagetRotation, SpawnParams);
-					SpawnedProjectile->bUseServerSideRewind = false;
+					SpawnedProjectile->bUseServerSideRewind = true;
 				}
 			}
 			// 클라 (무기가 서버측 되감기를 사용한다)

@@ -376,14 +376,14 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	AttachActorToRightHand(EquippedWeapon);
 	// 장착된 무기의 오너를 지정
 	EquippedWeapon->SetOwner(Character);
-	// 오너변경직후(플레이어가 무기를 장착) HUDAmmo 세팅
-	EquippedWeapon->SetHUDAmmo();
 	// CarriedAmmo 설정하기전에 무기의 타입 지정
 	UpdateCarriedAmmo();
 	// 서버에서 사운드 재생
 	PlayEquipWeaponSound(WeaponToEquip);
 	// 무기를 집자마자 탄창이 비어있다면
 	ReloadEmptyWeapon();
+	// HUDAmmo 세팅
+	EquippedWeapon->SetHUDAmmo();
 }
 
 void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
@@ -1065,7 +1065,7 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-
+	
 	// 샷건or유탄발사기 일때 더이상 재장전할 탄창이 없을경우 몽타주 섹션을 건너 뛰어야 한다.
 	bool bJumpToShotgunEnd =
 		CombatState == ECombatState::ECS_Reloading &&

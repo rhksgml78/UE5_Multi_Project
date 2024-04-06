@@ -74,46 +74,43 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 			// 피격 반복문이 끝난후 생성한 테이블을 검사한다. 해당 반복문은 샷건에 피격단한 플레이어의 수만큼 반복된다.
 			if (HitPair.Key && InstigatorController)
 			{
-				if (HasAuthority()) // 서버 일때
+				bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+
+				if (HasAuthority() && bCauseAuthDamage) // 서버 일때
 				{
-					if (!bUseServerSideRewind) // 되감기 설정 OFF
-					{
-						UGameplayStatics::ApplyDamage(
-							HitPair.Key,
-							Damage * HitPair.Value, // 피격수만큼 데미지
-							InstigatorController,
-							this,
-							UDamageType::StaticClass()
-						);
-					}
+					 // 되감기 설정 OFF
+					UGameplayStatics::ApplyDamage(
+						HitPair.Key,
+						Damage * HitPair.Value, // 피격수만큼 데미지
+						InstigatorController,
+						this,
+						UDamageType::StaticClass()
+					);
 				}
 
 				// 임시배열에 피격당한 플레이어를 추가해준다.
 				HitCharacters.Add(HitPair.Key);
 			}
 		}
-		if (!HasAuthority()) // 클라 일때
+		if (!HasAuthority() && bUseServerSideRewind) // 클라 일때
 		{
-			if (bUseServerSideRewind) // 되감기 설정 ON
+			// 되감기 설정 ON
+			PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(OwnerPawn) : PlayerOwnerCharacter;
+
+			PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(InstigatorController) : PlayerOwnerController;
+
+			// 주의할점! 샷건의 탄퍼짐 갯수*플레이어수*피격검사수*데미지계산수 의 상당히 큰 반복문이 필요하기때문에 검사 조건에 PlayerOwnerCharacter->IsLocallyControlled() 를 넣어 클라이언트 한명의 행동에 호출시키는 것이 적절하다. 단순히 클라이언트 조건으로만 검사할경우 한명의 플레이어가 샷건을 쐈을때 모든 플레이어가 실행하기 때문이다.
+			if (PlayerOwnerController &&
+				PlayerOwnerCharacter &&
+				PlayerOwnerCharacter->GetLagCompensation() &&
+				PlayerOwnerCharacter->IsLocallyControlled())
 			{
-				// 클라이언트에서는 서버되감기를 실행할 수 있다.
-				PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(OwnerPawn) : PlayerOwnerCharacter;
-
-				PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(InstigatorController) : PlayerOwnerController;
-
-				// 주의할점! 샷건의 탄퍼짐 갯수*플레이어수*피격검사수*데미지계산수 의 상당히 큰 반복문이 필요하기때문에 검사 조건에 PlayerOwnerCharacter->IsLocallyControlled() 를 넣어 클라이언트 한명의 행동에 호출시키는 것이 적절하다. 단순히 클라이언트 조건으로만 검사할경우 한명의 플레이어가 샷건을 쐈을때 모든 플레이어가 실행하기 때문이다.
-				if (PlayerOwnerController &&
-					PlayerOwnerCharacter &&
-					PlayerOwnerCharacter->GetLagCompensation() && 
-					PlayerOwnerCharacter->IsLocallyControlled())
-				{
-					PlayerOwnerCharacter->GetLagCompensation()->ShotgunServerScoreRequest(
-						HitCharacters,
-						Start,
-						HitTargets,
-						PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime
-					);
-				}
+				PlayerOwnerCharacter->GetLagCompensation()->ShotgunServerScoreRequest(
+					HitCharacters,
+					Start,
+					HitTargets,
+					PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime
+				);
 			}
 		}
 	}
