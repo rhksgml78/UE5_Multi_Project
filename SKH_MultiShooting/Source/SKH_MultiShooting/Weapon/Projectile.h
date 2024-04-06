@@ -29,6 +29,7 @@ public:
 	float InitialSpeed = 15000;
 
 	// 데미지 관련
+	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
 protected:
