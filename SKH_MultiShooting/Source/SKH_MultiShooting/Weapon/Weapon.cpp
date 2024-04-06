@@ -70,6 +70,9 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 
 	//#include "Net/UnrealNetwork.h" 포함 필요
 	DOREPLIFETIME(AWeapon, WeaponState);
+
+	// SSR 사용 여부를 판단하는 변수는 플레이어인 각 오너에게만 전달.
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -97,6 +100,12 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		//플레이어의 오버랩웨폰 객체를 nullptr 로 변경
 		PlayerCharcter->SetOverlappingWeapon(nullptr);
 	}
+}
+
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	// 핑이 너무높으면 SSR을 사용하는 의미가 없기떄문에 매개변수로 들어온 값의 반대로 적용시켜준다.
+	bUseServerSideRewind = !bPingTooHigh;
 }
 
 void AWeapon::SetWeaponState(EWeaponState State)
@@ -144,6 +153,21 @@ void AWeapon::OnEquipped()
 	}
 	// 윤곽선 설정 OFF
 	EnableCustomDepth(false);
+
+	// 플레이어의 컨트롤러에 접근하여 델리게이트 바인딩
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && bUseServerSideRewind)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+
+		// 현재 델리게이트에 아무런 함수도 바인딩 되어잇지 않기때문에 not isbound 조건일때 함수를 바인딩 하도록 한다.
+		if (PlayerOwnerController && 
+			HasAuthority() && 
+			!PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.AddDynamic(this, &ThisClass::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::OnEquippedSecondary()
@@ -162,6 +186,20 @@ void AWeapon::OnEquippedSecondary()
 	}
 	// 윤곽선 설정 OFF
 	EnableCustomDepth(false);
+
+	// 플레이어의 컨트롤러에 접근하여 델리게이트 바인딩 해제
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && bUseServerSideRewind)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+
+		if (PlayerOwnerController &&
+			HasAuthority() &&
+			PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.RemoveDynamic(this, &ThisClass::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::OnDroped()
@@ -182,6 +220,20 @@ void AWeapon::OnDroped()
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
 	WeaponMesh->MarkRenderStateDirty();
 	EnableCustomDepth(true);
+
+	// 플레이어의 컨트롤러에 접근하여 델리게이트 바인딩 해제
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && bUseServerSideRewind)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AFirstPlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+
+		if (PlayerOwnerController &&
+			HasAuthority() &&
+			PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.RemoveDynamic(this, &ThisClass::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::SpendRound()

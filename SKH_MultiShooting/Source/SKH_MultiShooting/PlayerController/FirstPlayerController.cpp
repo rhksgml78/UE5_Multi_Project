@@ -57,6 +57,14 @@ void AFirstPlayerController::CheckPing(float DeltaTime)
 			{
 				HighPingWarning();
 				PingAnimationRuningTime = 0.f; // 초기화
+
+				// 서버로 전송
+				ServerReportPingStatus(true);
+			}
+			else
+			{
+				// 서버로 전송
+				ServerReportPingStatus(false);
 			}
 		}
 		HighPingRunningTime = 0;
@@ -79,6 +87,11 @@ void AFirstPlayerController::CheckPing(float DeltaTime)
 			StopHighPingWarning();
 		}
 	}
+}
+
+void AFirstPlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
+{
+	HighPingDelegate.Broadcast(bHighPing);
 }
 
 void AFirstPlayerController::CheckTimeSync(float DeltaTime)

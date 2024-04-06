@@ -5,6 +5,7 @@
 
 #include "FirstPlayerController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
 
 UCLASS()
 class SKH_MULTISHOOTING_API AFirstPlayerController : public APlayerController
@@ -49,6 +50,9 @@ public:
 
 	// 서버와 클라이언트간에 동기화 예측시간의 반
 	float SingleTripTime = 0.f;
+
+	// 핑 델리게이트
+	FHighPingDelegate HighPingDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -152,6 +156,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float HighPingThreshold = 50.f; // 주의 기준치가될 핑 수치
+
+	// 서버에 핑의 상태를 전송할 함수
+	UFUNCTION(Server, Reliable)
+	void ServerReportPingStatus(bool bHighPing);
 
 public:
 	FORCEINLINE APlayerHUD* GetPlayerHUD() const { return PlayerHUD; }
