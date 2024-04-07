@@ -345,14 +345,14 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 		);
 		if (ConfirmHitResult.bBlockingHit)
 		{
-			if (ConfirmHitResult.Component.IsValid())
-			{
-				UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
-				if (Box)
-				{
-					DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
-				}
-			}
+			//if (ConfirmHitResult.Component.IsValid())
+			//{
+			//	UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
+			//	if (Box)
+			//	{
+			//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
+			//	}
+			//}
 			ResetHitBoxes(HitCharacter, CurrentFrame);
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, true };
@@ -375,14 +375,14 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 			);
 			if (ConfirmHitResult.bBlockingHit)
 			{
-				if (ConfirmHitResult.Component.IsValid())
-				{
-					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
-					if (Box)
-					{
-						DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
-					}
-				}
+				//if (ConfirmHitResult.Component.IsValid())
+				//{
+				//	UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
+				//	if (Box)
+				//	{
+				//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
+				//	}
+				//}
 				ResetHitBoxes(HitCharacter, CurrentFrame);
 				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };
@@ -431,21 +431,21 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
 	PathParams.TraceChannel = ECC_HitBox;
 	PathParams.ActorsToIgnore.Add(GetOwner());
 	PathParams.DrawDebugTime = MaxRecordTime;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+	PathParams.DrawDebugType = EDrawDebugTrace::None;
 
 	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
 	
 	if (PathResult.HitResult.bBlockingHit)
 	{
 		// Çìµå¼¦
-		if (PathResult.HitResult.Component.IsValid())
-		{
-			UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
-			if (Box)
-			{
-				DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
-			}
-		}
+		//if (PathResult.HitResult.Component.IsValid())
+		//{
+		//	UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
+		//	if (Box)
+		//	{
+		//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
+		//	}
+		//}
 		ResetHitBoxes(HitCharacter, CurrentFrame);
 		EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 		return FServerSideRewindResult{ true, true };
@@ -466,14 +466,14 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
 		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
 		if (PathResult.HitResult.bBlockingHit)
 		{
-			if (PathResult.HitResult.Component.IsValid())
-			{
-				UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
-				if (Box)
-				{
-					DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
-				}
-			}
+			//if (PathResult.HitResult.Component.IsValid())
+			//{
+			//	UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
+			//	if (Box)
+			//	{
+			//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
+			//	}
+			//}
 			ResetHitBoxes(HitCharacter, CurrentFrame);
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, false };
@@ -539,14 +539,14 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(ConfirmHitResult.GetActor());
 			if (PlayerCharacter)
 			{
-				if (ConfirmHitResult.Component.IsValid())
-				{
-					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
-					if (Box)
-					{
-						DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
-					}
-				}
+				//if (ConfirmHitResult.Component.IsValid())
+				//{
+				//	UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
+				//	if (Box)
+				//	{
+				//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 3.f);
+				//	}
+				//}
 
 				if (ShotgunResult.HeadShots.Contains(PlayerCharacter))
 				{
@@ -595,14 +595,14 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(ConfirmHitResult.GetActor());
 			if (PlayerCharacter)
 			{
-				if (ConfirmHitResult.Component.IsValid())
-				{
-					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
-					if (Box)
-					{
-						DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
-					}
-				}
+				//if (ConfirmHitResult.Component.IsValid())
+				//{
+				//	UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
+				//	if (Box)
+				//	{
+				//		DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 3.f);
+				//	}
+				//}
 
 				if (ShotgunResult.BodyShots.Contains(PlayerCharacter))
 				{

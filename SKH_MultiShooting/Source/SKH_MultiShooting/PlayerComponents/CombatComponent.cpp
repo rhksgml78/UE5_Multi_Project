@@ -358,6 +358,33 @@ void UCombatComponent::SwapWeapon()
 	TempWeapon = nullptr;
 }
 
+void UCombatComponent::FinishSwapAttachWeapon()
+{
+	// 교체된 무기가 손에 부착되고 해당정보를 업데이트하는 함수 노티파이에서 실행된다.
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	PlayEquipWeaponSound(EquippedWeapon);
+	ReloadEmptyWeapon();
+
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttackActorToBackpack(SecondaryWeapon);
+}
+
+void UCombatComponent::FinishSwap()
+{
+	// 스왑 몽타주 완료시 원래상태로 되돌리기. 노티파이에서 실행된다.
+	if (Character && Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	if (Character)
+	{
+		Character->bFinishedSwapping = true;
+	}
+}
+
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 {
 	if (WeaponToEquip == nullptr) return;
@@ -659,33 +686,6 @@ void UCombatComponent::LaunchGrenade()
 	{
 		ServerLaunchGrenade(HitTarget);
 	}
-}
-
-void UCombatComponent::FinishSwap()
-{
-	// 스왑 몽타주 완료시 원래상태로 되돌리기.
-	if (Character && Character->HasAuthority())
-	{
-		CombatState = ECombatState::ECS_Unoccupied;
-	}
-	if (Character)
-	{
-		Character->bFinishedSwapping = true;
-	}
-}
-
-void UCombatComponent::FinishSwapAttachWeapon()
-{
-	// 이후 주무기와 보조무기의 상세 설정을 진행한다.
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	EquippedWeapon->SetHUDAmmo();
-	UpdateCarriedAmmo();
-	PlayEquipWeaponSound(EquippedWeapon);
-	ReloadEmptyWeapon();
-
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttackActorToBackpack(SecondaryWeapon);
 }
 
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
