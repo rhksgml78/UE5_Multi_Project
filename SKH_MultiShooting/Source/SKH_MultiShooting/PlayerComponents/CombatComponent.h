@@ -45,6 +45,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LaunchGrenade();
 
+	// 무기교체가 끝날때 노티파이와 연동할 함수
+	UFUNCTION(BlueprintCallable)
+	void FinishSwap();
+
+	// 중간에 실제로 무기를 교체할 노티파이 연동 함수
+	UFUNCTION(BlueprintCallable)
+	void FinishSwapAttachWeapon();
+
 	// 서버에서 수류탄을 던지는 방향 확인
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);

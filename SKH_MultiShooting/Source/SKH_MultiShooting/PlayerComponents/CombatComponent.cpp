@@ -344,24 +344,18 @@ void UCombatComponent::SwapWeapon()
 {
 	if (EquippedWeapon == nullptr || 
 		SecondaryWeapon == nullptr ||
-		CombatState != ECombatState::ECS_Unoccupied) return;
+		CombatState != ECombatState::ECS_Unoccupied ||
+		Character == nullptr) return;
+
+	Character->PlaySwapMontage();
+	Character->bFinishedSwapping = false;
+	CombatState = ECombatState::ECS_SwappingWeapons;
 
 	// 스왑 방식을 사용하여 주무기와 보조무기의 값을 변경한다.
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
 	TempWeapon = nullptr;
-
-	// 이후 주무기와 보조무기의 상세 설정을 진행한다.
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	EquippedWeapon->SetHUDAmmo();
-	UpdateCarriedAmmo();
-	PlayEquipWeaponSound(EquippedWeapon);
-	ReloadEmptyWeapon();
-
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttackActorToBackpack(SecondaryWeapon);
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
@@ -667,6 +661,33 @@ void UCombatComponent::LaunchGrenade()
 	}
 }
 
+void UCombatComponent::FinishSwap()
+{
+	// 스왑 몽타주 완료시 원래상태로 되돌리기.
+	if (Character && Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	if (Character)
+	{
+		Character->bFinishedSwapping = true;
+	}
+}
+
+void UCombatComponent::FinishSwapAttachWeapon()
+{
+	// 이후 주무기와 보조무기의 상세 설정을 진행한다.
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	PlayEquipWeaponSound(EquippedWeapon);
+	ReloadEmptyWeapon();
+
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttackActorToBackpack(SecondaryWeapon);
+}
+
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {
 	// 플레이어BP에서 지정된 수류탄을 생성하여 발사한다. 단 생성은 서버에서만 하는데 각 클라이언트플레이어의 발사 각도는 따로 계산되어야한다.
@@ -713,6 +734,12 @@ void UCombatComponent::OnRep_CombatState()
 			Character->PlayThrowGrenadeMontage();
 			AttachActorToLefttHand(EquippedWeapon);
 			ShowAttachedGrenade(true);
+		}
+		break;
+	case ECombatState::ECS_SwappingWeapons:
+		if (Character && !Character->IsLocallyControlled())
+		{
+			Character->PlaySwapMontage();
 		}
 		break;
 	default:
@@ -1043,8 +1070,6 @@ bool UCombatComponent::CanFire()
 	// 장착한 무기가 없다면 false 반환
 	if (EquippedWeapon == nullptr) return false;
 
-	if (bLocallyReloading) return false;
-
 	// 샷건과 유탄발사기에 대하여 예외처리
 	if (!EquippedWeapon->IsEmpty() && bCanFire &&
 		CombatState == ECombatState::ECS_Reloading &&
@@ -1052,6 +1077,8 @@ bool UCombatComponent::CanFire()
 	{
 		return true;
 	}
+
+	if (bLocallyReloading) return false;
 
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 

@@ -33,6 +33,7 @@ public:
 	void PlayElimMontage();
 	void PlayReLoadMontage();
 	void PlayThrowGrenadeMontage();
+	void PlaySwapMontage();
 
 	// 캐릭터의 움직임이 변할때마다 호출되는 함수(매프레임X)
 	virtual void OnRep_ReplicatedMovement() override;
@@ -66,6 +67,8 @@ public:
 
 	// 기본무기 생성 함수
 	void SpawnDefaultWeapon();
+
+	bool bFinishedSwapping = false;
 
 	/*
 	서버의 되감기용 박스 충돌체 생성.
@@ -225,6 +228,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* ThrowGrenadeMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* SwapMontage;
 
 	// 카메라 가려짐 보안
 	void HideCameraIfCharacterClose();
