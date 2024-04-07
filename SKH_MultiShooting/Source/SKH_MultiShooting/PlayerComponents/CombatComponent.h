@@ -97,16 +97,16 @@ protected:
 	void ShotgunLocalFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
 
 	// 서버에서만 호출 _Implementation 명시 필요
-	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget, float FireDelay);
 
 	// 서버에서 로컬로 실행 모든클라이언트에 호출
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	// 서버에서만 호출 _Implementation 명시 필요
-	UFUNCTION(Server, Reliable)
-	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget, float FireDelay);
 
 	// 서버에서 로컬로 실행 모든클라이언트에 호출
 	UFUNCTION(NetMulticast, Reliable)

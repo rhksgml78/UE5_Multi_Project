@@ -140,7 +140,7 @@ void UCombatComponent::FireProjectileWeapon()
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
 
 		// 서버에 실행요청하고 다른플레이어의 발사 동기화
-		ServerFire(HitTarget);
+		ServerFire(HitTarget, EquippedWeapon->FireDelay);
 	}
 }
 
@@ -154,7 +154,7 @@ void UCombatComponent::FireHitScanWeapon()
 		if (!Character->HasAuthority()) LocalFire(HitTarget);
 
 		// 서버에 실행요청하고 다른플레이어의 발사 동기화
-		ServerFire(HitTarget);
+		ServerFire(HitTarget, EquippedWeapon->FireDelay);
 	}
 }
 
@@ -172,15 +172,29 @@ void UCombatComponent::FireMultiHitScanWeapon()
 			{
 				ShotgunLocalFire(HitTargets);
 			}
-			ServerShotgunFire(HitTargets);
+			ServerShotgunFire(HitTargets, EquippedWeapon->FireDelay);
 		}
 	}
 }
 
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
 {
 	// 서버에서 로컬로 모든클라이언트에 복제 실행
 	MulticastFire(TraceHitTarget);
+}
+
+bool UCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
+{
+	// 함수의 매개변수를 검증하기위한 함수 _Validate
+	if (EquippedWeapon)
+	{
+		// 부동소수점은 Equal 검사가 적절하지 않으므로 근사값 검사인 IsNearlyEqual을 사용하도록한다. 편차값은 변수마다의 범위에 따라 다르게 설정
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+
+		// 반일 반환값이 false라면 해당레벨에서 제외된다.
+		return bNearlyEqual;
+	}
+	return true;
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -194,12 +208,21 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 	LocalFire(TraceHitTarget);
 }
 
-void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTarget)
+void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTarget, float FireDelay)
 {
 	// 서버에서 로컬로 모든클라이언트에 복제 실행
 	MulticastShotgunFire(TraceHitTarget);
 }
 
+bool UCombatComponent::ServerShotgunFire_Validate(const TArray<FVector_NetQuantize>& TraceHitTarget, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+	return true;
+}
 void UCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTarget)
 {
 	// 각 플레이어라면 리턴
