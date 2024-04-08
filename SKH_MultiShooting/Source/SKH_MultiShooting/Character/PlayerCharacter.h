@@ -80,6 +80,13 @@ public:
 
 	bool bFinishedSwapping = false;
 
+	// 캐릭터 점수관련
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+
 	/*
 	서버의 되감기용 박스 충돌체 생성.
 	각 충돌체는 단순박스이므로 비용이 크게 높지않다.
@@ -339,6 +346,12 @@ private:
 	UPROPERTY()
 	class AFirstPlayerState* FirstPlayerState;
 
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* CrownSystem;
+
+	UPROPERTY()
+	class UNiagaraComponent* CrownComponent;
+	
 	// 수류탄
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* AttachedGrenade;

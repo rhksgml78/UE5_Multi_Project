@@ -755,3 +755,53 @@ void AFirstPlayerController::SetSpeedUi(bool isVisible)
 		}
 	}
 }
+
+void AFirstPlayerController::BroadcastElim(APlayerState* Attacker, APlayerState* Victim)
+{
+	// 서버가 클라이언트에 복제 실행
+	ClientElimAnnouncement(Attacker, Victim);
+}
+
+void AFirstPlayerController::ClientElimAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
+{
+	// 모든 클라이언트에 복제된다.
+	APlayerState* Self = GetPlayerState<APlayerState>();
+	if (Attacker && Victim && Self)
+	{
+		PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+		if (PlayerHUD)
+		{
+			// 내가 다른플레이어를 처치
+			if (Attacker == Self && Victim != Self)
+			{
+				PlayerHUD->AddElimAnnouncement("You", Victim->GetPlayerName());
+				return;
+			}
+
+			// 다른플레이어가 나를 처치
+			if (Attacker != Self && Victim == Self)
+			{
+				PlayerHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "You");
+				return;
+			}
+
+			// 내가 나를 처치
+			if (Attacker == Self && Attacker == Victim)
+			{
+				PlayerHUD->AddElimAnnouncement("You", "Self");
+				return;
+			}
+
+			// 다른플레이어가 본인 스스로 처치
+			if (Attacker != Self && Attacker == Victim)
+			{
+				PlayerHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "Self");
+				return;
+			}
+
+			// 플레이어 이외의 플레이어들끼리 처치
+			PlayerHUD->AddElimAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
+		}
+	}
+}

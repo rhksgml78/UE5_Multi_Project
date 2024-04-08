@@ -84,11 +84,44 @@ void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirs
 
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && PlayerGameState)
 	{
+		//임시배열에 플레이어의 점수 순서 리스트를 저장한다.
+		TArray<AFirstPlayerState*> PlayersCurrentlyInTheLead;
+
+		for (auto LeadPlayer : PlayerGameState->TopScoringPlayers)
+		{
+			PlayersCurrentlyInTheLead.Add(LeadPlayer);
+		}
+
 		// 플레이어가 자살이아닌 다른 플레이어를 처치했을때 1점을 추가 시킨다.
 		AttackerPlayerState->AddToScore(1.f);
 
 		// 최대득점 갱신(해당플레이어를 탈락시긴 플레이어)
 		PlayerGameState->UpdateTopScore(AttackerPlayerState);
+
+		if (PlayerGameState->TopScoringPlayers.Contains(AttackerPlayerState))
+		{
+			APlayerCharacter* Leader = Cast<APlayerCharacter>(AttackerPlayerState->GetPawn());
+			if (Leader)
+			{
+				Leader->MulticastGainedTheLead();
+			}
+		}
+
+
+		// 플레이어의 득점이 갱신되고나서 배열에 저장되어있던 플레이어들의 최다득점 이펙트를 비활성화한다.
+		for (int32 i = 0; i < PlayersCurrentlyInTheLead.Num(); i++)
+		{
+
+			if (!PlayerGameState->TopScoringPlayers.Contains(PlayersCurrentlyInTheLead[i]))
+			{
+				APlayerCharacter* Loser = Cast<APlayerCharacter>(PlayersCurrentlyInTheLead[i]->GetPawn());
+				if (Loser)
+				{
+					Loser->MulticastLostTheLead();
+				}
+			}
+		}
+
 	}
 
 	if (VictimPlayerState)
@@ -101,6 +134,15 @@ void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirs
 	{
 		// 공격당하여 처리된 플레이어는 Elim 매개변수로 false 전달.
 		ElimmedCharacter->Elim(false);
+	}
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AFirstPlayerController* FirstPlayer = Cast<AFirstPlayerController>(*It);
+		if (FirstPlayer && AttackerPlayerState && VictimPlayerState)
+		{
+			FirstPlayer->BroadcastElim(AttackerPlayerState, VictimPlayerState);
+		}
 	}
 }
 

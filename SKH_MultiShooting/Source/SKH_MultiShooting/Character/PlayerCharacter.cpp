@@ -25,6 +25,9 @@
 #include "SKH_MultiShooting/Weapon/WeaponTypes.h"
 #include "Components/BoxComponent.h"
 #include "SKH_MultiShooting/PlayerComponents/LagCompensationComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "SKH_MultiShooting/GameState/PlayerGameState.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -502,6 +505,11 @@ void APlayerCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 	if (bHideSniperScope)
 	{
 		ShowSniperScopeWidget(false);
+	}
+
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
 	}
 
 	// 일정시간뒤 실행할 타이머를 활성화 한다.
@@ -1047,6 +1055,12 @@ void APlayerCharacter::PollInit()
 		{
 			FirstPlayerState->AddToScore(0.f);
 			FirstPlayerState->AddToDefeats(0);
+
+			APlayerGameState* PlayerGameState = Cast<APlayerGameState>(UGameplayStatics::GetGameState(this));
+			if (PlayerGameState && PlayerGameState->TopScoringPlayers.Contains(FirstPlayerState))
+			{
+				MulticastGainedTheLead();
+			}
 		}
 	}
 }
@@ -1169,6 +1183,37 @@ void APlayerCharacter::SpawnDefaultWeapon()
 		{
 			Combat->EquipWeapon(StartingWeapon);
 		}
+	}
+}
+
+void APlayerCharacter::MulticastGainedTheLead_Implementation()
+{
+	// 플레이어의 점수가 최고점일때 이펙트를 활성
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr)
+	{
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			CrownSystem,
+			GetCapsuleComponent(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+	if (CrownComponent)
+	{
+		CrownComponent->Activate();
+	}
+}
+
+void APlayerCharacter::MulticastLostTheLead_Implementation()
+{
+	// 플레이어의 점수가 최고점이었다가 변경되었을때 이펙트를 비활성
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
 	}
 }
 

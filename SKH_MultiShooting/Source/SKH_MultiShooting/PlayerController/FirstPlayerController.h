@@ -54,6 +54,8 @@ public:
 	// 핑 델리게이트
 	FHighPingDelegate HighPingDelegate;
 
+	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
@@ -98,6 +100,9 @@ protected:
 
 	// 바인딩 콜백 함수
 	void ShowReturnToMainMenu();
+
+	UFUNCTION(Client, Reliable)
+	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 private:
 	// 메인메뉴 위젯
