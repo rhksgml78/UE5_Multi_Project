@@ -9,6 +9,8 @@
 
 #include "PlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
+
 UCLASS()
 class SKH_MULTISHOOTING_API APlayerCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
@@ -39,10 +41,18 @@ public:
 	virtual void OnRep_ReplicatedMovement() override;
 
 	// 사망시 탈락 처리할 함수
-	void Elim();
+	void Elim(bool bPlayerLeftGame);
 
+	// 서버와 모든클라이언트에 복제
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim();
+	void MulticastElim(bool bPlayerLeftGame);
+
+	// 서버에 실행요청할 함수
+	UFUNCTION(Server, Reliable)
+	void ServerLeavGame();
+
+	// 델리게이트 선언
+	FOnLeftGame OnLeftGame;
 
 	// 게임의 상태별로 캐릭터의 입력을 제한하기 위한 변수
 	UPROPERTY(Replicated)
@@ -287,6 +297,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	float ElimDelay = 5.f;
+
+	// 클라이언트 플레이어가 게임 종료시 사용할 변수
+	bool bLeftGame = false;
 	
 	// 디졸브 이펙트 관련
 	UPROPERTY(VisibleAnywhere)

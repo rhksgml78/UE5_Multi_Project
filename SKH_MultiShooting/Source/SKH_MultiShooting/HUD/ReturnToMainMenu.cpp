@@ -3,6 +3,7 @@
 #include "Components/Button.h"
 #include "MultiplayerSessionsSubsystem.h"
 #include "GameFramework/GameModeBase.h"
+#include "SKH_MultiShooting/Character/PlayerCharacter.h"
 
 
 bool UReturnToMainMenu::Initialize()
@@ -48,9 +49,15 @@ void UReturnToMainMenu::MenuSetup()
 	if (GameInstance)
 	{
 		MultiplayerSessionsSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-		if (MultiplayerSessionsSubsystem && 
-			!MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.IsBound())
+		if (MultiplayerSessionsSubsystem)
 		{
+			// 서브시스템에 이미 바인딩이 된 작업이있으므로 해당 바인딩을 지우고 다시 바인딩
+			MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.Clear();
+
+			//MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.RemoveDynamic(this, &ThisClass::OnDestroySession);
+
+			//조건문에 &&!MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.IsBound() 제외
+			
 			// 세션이 파괴될때 실행할 함수 바인딩 (한번만) 반환값은 bool형
 			MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		}
@@ -87,18 +94,6 @@ void UReturnToMainMenu::MenuTearDown()
 	}
 }
 
-void UReturnToMainMenu::ReturnButtonClicked()
-{
-	ReturnButton->SetIsEnabled(false);
-
-	// 플레이어의 세션을 파괴하고 메뉴로 돌아가야 한다.
-	if (MultiplayerSessionsSubsystem)
-	{
-		// 세션서브시스템의 디스트로이세션을 실행하면 MultiplayerOnDestroySessionComplete가 호출될때 바인딩된 OnDestroySession 함수가 실행된다.
-		MultiplayerSessionsSubsystem->DestroySession();
-	}
-}
-
 void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
 {
 	if (!bWasSuccessful)
@@ -127,5 +122,48 @@ void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
 				PlayerController->ClientReturnToMainMenuWithTextReason(FText());
 			}
 		}
+	}
+}
+
+void UReturnToMainMenu::ReturnButtonClicked()
+{
+	// 버튼이 클릭되면 버튼을 비활성화 하고
+	ReturnButton->SetIsEnabled(false);
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		// 월드상의 플레이어(본인)의 컨트롤러에 접근한다.
+		APlayerController* FirstPlayerController = World->GetFirstPlayerController();
+
+		if (FirstPlayerController)
+		{
+			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(FirstPlayerController->GetPawn());
+
+			if (PlayerCharacter)
+			{
+				// 서버RPC 함수를 실행한다.
+				PlayerCharacter->ServerLeavGame();
+
+				// 플레이어 캐릭터의 델리게이트 OnLeftGame에 함수를 바인딩 시킨다. 이후 플레이어가 Elim타이머가 끝났을때 Broadcast를 실행하면서 OnPlayerLeftGame이 호출된다.
+				PlayerCharacter->OnLeftGame.AddDynamic(this, &ThisClass::OnPlayerLeftGame);
+			}
+			else
+			{
+				// 플레이어가 nullptr 즉 캐스팅이 안된경우 버튼을 다시 활성화 한다.
+				ReturnButton->SetIsEnabled(true);
+			}
+		}
+	}
+
+}
+
+void UReturnToMainMenu::OnPlayerLeftGame()
+{
+	// 플레이어의 세션을 파괴하고 메뉴로 돌아가야 한다.
+	if (MultiplayerSessionsSubsystem)
+	{
+		// 세션서브시스템의 디스트로이세션을 실행하면 MultiplayerOnDestroySessionComplete가 호출될때 바인딩된 OnDestroySession 함수가 실행된다.
+		MultiplayerSessionsSubsystem->DestroySession();
 	}
 }

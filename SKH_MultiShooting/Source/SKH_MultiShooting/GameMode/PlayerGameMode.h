@@ -31,6 +31,9 @@ public:
 	// 리스폰
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 
+	// 플레이어가 게임을 떠날때
+	void PlayerLeftGame(class AFirstPlayerState* PlayerLeaving);
+
 	// 플레이를 시작할 타이머
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f; // 대기 시간

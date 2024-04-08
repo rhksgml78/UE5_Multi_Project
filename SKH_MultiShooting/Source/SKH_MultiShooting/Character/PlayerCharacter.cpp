@@ -400,51 +400,20 @@ void APlayerCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void APlayerCharacter::Elim()
+void APlayerCharacter::Elim(bool bPlayerLeftGame)
 {
 	// 무기 떨어뜨리기
 	DropOrDestroyWeapons();
 
 	// 서버에서 각 클라이언트에게 멀티캐스트 함수 호출
-	MulticastElim();
-	GetWorldTimerManager().SetTimer(
-		ElimTimer,
-		this,
-		&ThisClass::ElimTimerFinishied,
-		ElimDelay
-	);
+	MulticastElim(bPlayerLeftGame);
 }
 
-void APlayerCharacter::DropOrDestroyWeapons()
+void APlayerCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 {
-	if (Combat)
-	{
-		if (Combat->EquippedWeapon)
-		{
-			DropOrDestroyWeapon(Combat->EquippedWeapon);
-		}
-		if (Combat->SecondaryWeapon)
-		{
-			DropOrDestroyWeapon(Combat->SecondaryWeapon);
-		}
-	}
-}
+	// 전달받은 값으로 플레이어의 변수값을 갱신 한다.
+	bLeftGame = bPlayerLeftGame;
 
-void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
-{
-	if (Weapon == nullptr) return;
-	if (Weapon->bDestroyWeapon)
-	{
-		Weapon->Destroy();
-	}
-	else
-	{
-		Weapon->Dropped();
-	}
-}
-
-void APlayerCharacter::MulticastElim_Implementation()
-{
 	if (FirstPlayerController)
 	{
 		// 플레이어 사망시 무기가 드랍되기 떄문에 현재 AmmoHUD를 0으로 표기 되도록 한다.
@@ -506,7 +475,7 @@ void APlayerCharacter::MulticastElim_Implementation()
 			ElimBotEffect,
 			ElimBotSpawnPoint,
 			GetActorRotation()
-			);
+		);
 	}
 	if (ElimBotSound)
 	{
@@ -526,7 +495,7 @@ void APlayerCharacter::MulticastElim_Implementation()
 
 	// 만일 스나이퍼줌이 켜진상태로 사망했을경우 스코프 위젯을 없애야한다.
 	bool bHideSniperScope = IsLocallyControlled() &&
-		Combat && 
+		Combat &&
 		Combat->bAiming &&
 		Combat->EquippedWeapon &&
 		Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
@@ -534,14 +503,72 @@ void APlayerCharacter::MulticastElim_Implementation()
 	{
 		ShowSniperScopeWidget(false);
 	}
+
+	// 일정시간뒤 실행할 타이머를 활성화 한다.
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+		this,
+		&ThisClass::ElimTimerFinishied,
+		ElimDelay
+	);
 }
 
 void APlayerCharacter::ElimTimerFinishied()
 {
 	APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
-	if (PlayerGameMode)
+
+	// 멀티캐스트Elim 함수에서 갱신된 변수에 따라 플레이어가 게임을 떠난경우와 그렇지 않은경우 다른 로직을 실행한다.
+	if (PlayerGameMode && !bLeftGame)
 	{
+		// 플레이어가 게임을 떠난것이아니라면 리스폰을 요청하고
 		PlayerGameMode->RequestRespawn(this, Controller);
+	}
+	if (bLeftGame && IsLocallyControlled())
+	{
+		// 플레이어가 떠낫다면 델리게이트에 브로드캐스트
+		OnLeftGame.Broadcast();
+	}
+}
+
+void APlayerCharacter::DropOrDestroyWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon)
+		{
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon)
+		{
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
+	}
+}
+
+void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else
+	{
+		Weapon->Dropped();
+	}
+}
+
+void APlayerCharacter::ServerLeavGame_Implementation()
+{
+	// 게임모드와 상태를 얻어 실행한다. 이때 게임모드는 Server 가관리하고있으므로 서버의 게임모드인 AuthGameMode 를 통하여 얻는다.
+	APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
+
+	FirstPlayerState = FirstPlayerState == nullptr ? GetPlayerState<AFirstPlayerState>() : FirstPlayerState;
+
+	if (PlayerGameMode && FirstPlayerState)
+	{
+		// 서버가관리하는 게임모드가 게임을 떠난 플레이어의 상태를 전달한다.
+		PlayerGameMode->PlayerLeftGame(FirstPlayerState);
 	}
 }
 

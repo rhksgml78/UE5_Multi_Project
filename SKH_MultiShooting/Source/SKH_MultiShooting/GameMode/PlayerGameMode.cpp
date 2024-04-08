@@ -99,7 +99,8 @@ void APlayerGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirs
 
 	if (ElimmedCharacter)
 	{
-		ElimmedCharacter->Elim();
+		// 공격당하여 처리된 플레이어는 Elim 매개변수로 false 전달.
+		ElimmedCharacter->Elim(false);
 	}
 }
 
@@ -119,5 +120,24 @@ void APlayerGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* 
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStartsPoint);
 		int32 Selection = FMath::RandRange(0, PlayerStartsPoint.Num() - 1);
 		RestartPlayerAtPlayerStart(ElimmedController, PlayerStartsPoint[Selection]);
+	}
+}
+
+void APlayerGameMode::PlayerLeftGame(class AFirstPlayerState* PlayerLeaving)
+{
+	if (PlayerLeaving == nullptr) return;
+
+	APlayerGameState* PlayerGameState = GetGameState<APlayerGameState>();
+	if (PlayerGameState && PlayerGameState->TopScoringPlayers.Contains(PlayerLeaving))
+	{
+		// 플레이어가 떠날때 모든 플레이어의 점수목록에서 해당플레이어를 제거해야한다. 제거하지않고 떠날경우 나중에 nullptr 이 남아있으므로.
+		PlayerGameState->TopScoringPlayers.Remove(PlayerLeaving);
+	}
+
+	APlayerCharacter* CharacterLeaving = Cast<APlayerCharacter>(PlayerLeaving->GetPawn());
+	if (CharacterLeaving)
+	{
+		// 떠나는 플레이어는 Elim을 실행시킨다.
+		CharacterLeaving->Elim(true);
 	}
 }
