@@ -58,6 +58,8 @@ protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
 	void PollInit();
+	// 키입력 바인딩
+	virtual void SetupInputComponent() override;
 
 	/*
 	*서버와 클라이언트의 시간차이 동기화
@@ -94,8 +96,18 @@ protected:
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
 
+	// 바인딩 콜백 함수
+	void ShowReturnToMainMenu();
 
 private:
+	// 메인메뉴 위젯
+	UPROPERTY(EditAnywhere, Category = HUD)
+	TSubclassOf<class UUserWidget> ReturnToMainMenuWidget;
+
+	UPROPERTY()
+	class UReturnToMainMenu* ReturnToMainMenu;
+
+	bool bReturnToMainMenuOpen = false;
 
 	UPROPERTY()
 	class APlayerHUD* PlayerHUD;

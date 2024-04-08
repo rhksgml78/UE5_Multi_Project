@@ -29,6 +29,7 @@ void UReturnToMainMenu::MenuSetup()
 		PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
 		if (PlayerController)
 		{
+			// 메뉴위젯이 생성될경우 마우스 커서가 활성화되고 작동해야함
 			FInputModeGameAndUI InputModeData;
 			InputModeData.SetWidgetToFocus(TakeWidget());
 			PlayerController->SetInputMode(InputModeData);
@@ -36,9 +37,10 @@ void UReturnToMainMenu::MenuSetup()
 		}
 	}
 
-	if (ReturnButton)
+	if (ReturnButton && !
+		ReturnButton->OnClicked.IsBound())
 	{
-		// 버튼 클릭이벤트에 바인딩
+		// 버튼 클릭이벤트에 바인딩 (한번만)
 		ReturnButton->OnClicked.AddDynamic(this, &ThisClass::ReturnButtonClicked);
 	}
 
@@ -46,9 +48,10 @@ void UReturnToMainMenu::MenuSetup()
 	if (GameInstance)
 	{
 		MultiplayerSessionsSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-		if (MultiplayerSessionsSubsystem)
+		if (MultiplayerSessionsSubsystem && 
+			!MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.IsBound())
 		{
-			// 세션이 파괴될때 실행할 함수 바인딩
+			// 세션이 파괴될때 실행할 함수 바인딩 (한번만) 반환값은 bool형
 			MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		}
 	}
@@ -64,10 +67,23 @@ void UReturnToMainMenu::MenuTearDown()
 		PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
 		if (PlayerController)
 		{
+			// 마우스커서를 비활성화하고 위젯과 상호작용하지 않도록 재설정
 			FInputModeGameOnly InputModeData;
 			PlayerController->SetInputMode(InputModeData);
 			PlayerController->SetShowMouseCursor(false);
 		}
+	}
+	if (ReturnButton && 
+		ReturnButton->OnClicked.IsBound())
+	{
+		// 버튼 클릭이벤트 바인딩 해제
+		ReturnButton->OnClicked.RemoveDynamic(this, &ThisClass::ReturnButtonClicked);
+	}
+
+	if (MultiplayerSessionsSubsystem && MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.IsBound())
+	{
+		// 세션 바인딩 해제
+		MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.RemoveDynamic(this, &ThisClass::OnDestroySession);
 	}
 }
 
@@ -103,7 +119,7 @@ void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
 		}
 		else
 		{
-			// 서버가 아닌 클라이언트일경우 컨트롤러에 접근한다.
+			// 서버가 아닌 클라이언트일경우 각플레이어의 컨트롤러에 접근해야 한다.
 			PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
 			if (PlayerController)
 			{

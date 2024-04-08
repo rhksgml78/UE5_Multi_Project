@@ -13,6 +13,7 @@
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "SKH_MultiShooting/HUD/ReturnToMainMenu.h"
 
 void AFirstPlayerController::BeginPlay()
 {
@@ -27,6 +28,41 @@ void AFirstPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFirstPlayerController, MatchState);
+}
+
+void AFirstPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+	if (InputComponent == nullptr) return;
+
+	// 플레이어의 입력컴포넌트가 활성화 되었을때 키입력 바인딩.
+	InputComponent->BindAction("Quit", IE_Pressed, this, &ThisClass::ShowReturnToMainMenu);
+}
+
+void AFirstPlayerController::ShowReturnToMainMenu()
+{
+	// 메인메뉴 위젯 활성화
+	if (ReturnToMainMenuWidget == nullptr) return;
+
+	if (ReturnToMainMenu == nullptr)
+	{
+		ReturnToMainMenu = CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidget);
+	}
+	if (ReturnToMainMenu)
+	{
+		// 함수가실행될때(키입력이있을때) True & False 스왑.
+		bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+		if (bReturnToMainMenuOpen)
+		{
+			// 메뉴위젯 ON
+			ReturnToMainMenu->MenuSetup();
+		}
+		else
+		{
+			// 메뉴위젯 OFF
+			ReturnToMainMenu->MenuTearDown();
+		}
+	}
 }
 
 void AFirstPlayerController::Tick(float DeltaTime)
