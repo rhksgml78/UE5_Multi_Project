@@ -8,6 +8,8 @@ void APlayerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	
 	// 복제용 함수
 	DOREPLIFETIME(APlayerGameState, TopScoringPlayers);
+	DOREPLIFETIME(APlayerGameState, RedTeamScore);
+	DOREPLIFETIME(APlayerGameState, BlueTeamScore);
 }
 
 void APlayerGameState::UpdateTopScore(AFirstPlayerState* ScoringPlayer)
@@ -30,4 +32,14 @@ void APlayerGameState::UpdateTopScore(AFirstPlayerState* ScoringPlayer)
 		TopScoringPlayers.AddUnique(ScoringPlayer);
 		TopScore = ScoringPlayer->GetScore();
 	}
+}
+
+void APlayerGameState::OnRep_RedTeamScore()
+{
+
+}
+
+void APlayerGameState::OnRep_BlueTeamScore()
+{
+
 }

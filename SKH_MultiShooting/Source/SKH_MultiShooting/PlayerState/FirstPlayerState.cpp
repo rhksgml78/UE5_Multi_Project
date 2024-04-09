@@ -8,6 +8,7 @@ void AFirstPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFirstPlayerState, Defeats);
+	DOREPLIFETIME(AFirstPlayerState, Team);
 }
 
 void AFirstPlayerState::AddToScore(float ScoreAmount)
