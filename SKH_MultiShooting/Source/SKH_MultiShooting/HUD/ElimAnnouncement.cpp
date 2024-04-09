@@ -10,3 +10,7 @@ void UElimAnnouncement::SetElimAnnouncementText(FString AttackerName, FString Vi
 		AnnouncementText->SetText(FText::FromString(ElimAnnouncementText));
 	}
 }
+
+void UElimAnnouncement::SlideAnimStart_Implementation()
+{
+}

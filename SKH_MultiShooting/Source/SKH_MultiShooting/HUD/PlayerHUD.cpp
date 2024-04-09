@@ -3,6 +3,9 @@
 #include "PlayerOverlay.h"
 #include "Announcement.h"
 #include "ElimAnnouncement.h"
+#include "Components/HorizontalBox.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 void APlayerHUD::BeginPlay()
 {
@@ -44,7 +47,52 @@ void APlayerHUD::AddElimAnnouncement(FString Attacker, FString Victim)
 		{
 			ElimAnnouncementWidget->SetElimAnnouncementText(Attacker, Victim);
 			ElimAnnouncementWidget->AddToViewport();
+
+			// BP에서 생성한 위젯 애니메이션 재생
+			ElimAnnouncementWidget->SlideAnimStart();
+
+			for (UElimAnnouncement* Msg : ElimMessages)
+			{
+				// 배열의 갯수만큼 일정한 간격으로 아래(+Y축)로 롤업.
+				if (Msg && Msg->AnnouncementBox)
+				{
+					UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Msg->AnnouncementBox);
+					
+					FVector2D Position = CanvasSlot->GetPosition();
+					FVector2D NewPosition(CanvasSlot->GetPosition().X, Position.Y + CanvasSlot->GetSize().Y);
+					CanvasSlot->SetPosition(NewPosition);
+				}
+			}
+
+			// 배열에 저장
+			ElimMessages.Add(ElimAnnouncementWidget);
+
+			// 자동으로 위젯을 처리할 타이머 생성
+			FTimerHandle ElimMsgTimer;
+			FTimerDelegate ElimMsgDelegate;
+			
+			// 타이머델리게이트에 함수와 함수의 매개변수를 바인딩
+			ElimMsgDelegate.BindUFunction(
+				this, // 오브젝트
+				FName("ElimAnnouncementTimerFinished"), // 함수명
+				ElimAnnouncementWidget); // 매개변수타입
+
+			// 타이머 세팅 단순히 함수를 호출하는것이아닌 델리게이트에 바인딩한 함수를 호출하여 실행하는 것
+			GetWorldTimerManager().SetTimer(
+				ElimMsgTimer, // 핸들
+				ElimMsgDelegate, // 델리게이트
+				ElimAnnouncementTime, // 딜레이
+				false); // 반복
 		}
+	}
+}
+
+void APlayerHUD::ElimAnnouncementTimerFinished(UElimAnnouncement* MsgToRemove)
+{
+	if (MsgToRemove)
+	{
+		ElimMessages.Remove(MsgToRemove);
+		MsgToRemove->RemoveFromParent();
 	}
 }
 

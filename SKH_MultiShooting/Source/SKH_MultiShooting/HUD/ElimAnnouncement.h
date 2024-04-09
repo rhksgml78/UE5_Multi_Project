@@ -19,5 +19,8 @@ public:
 	class UTextBlock* AnnouncementText;
 
 	void SetElimAnnouncementText(FString AttackerName, FString VictimName);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SlideAnimStart();
 	
 };
