@@ -24,6 +24,8 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 
 		// 피격횟수만큼의 데미지를 저장하기위한 맵
 		TMap<APlayerCharacter*, uint32> HitMap;
+		TMap<APlayerCharacter*, uint32> HeadShotHitMap;
+		
 		for (FVector_NetQuantize HitTarget : HitTargets)
 		{
 			FHitResult FireHit;
@@ -32,13 +34,18 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(FireHit.GetActor());
 			if (PlayerCharacter)
 			{
-				if (HitMap.Contains(PlayerCharacter))
+				// 헤드샷과 헤드샷이아닌것을 구분해야함
+				const bool bHeadShot = FireHit.BoneName.ToString() == FString("head");
+
+				if (bHeadShot)
 				{
-					HitMap[PlayerCharacter]++;
+					if (HeadShotHitMap.Contains(PlayerCharacter)) HeadShotHitMap[PlayerCharacter]++;
+					else HeadShotHitMap.Emplace(PlayerCharacter, 1);
 				}
 				else
 				{
-					HitMap.Emplace(PlayerCharacter, 1);
+					if (HitMap.Contains(PlayerCharacter)) HitMap[PlayerCharacter]++;
+					else HitMap.Emplace(PlayerCharacter, 1);
 				}
 
 				if (ImpactParticles) // 피격 파티클 재생
@@ -69,29 +76,55 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		// 서버측 되감기에 사용할 임시 변수
 		TArray<APlayerCharacter*> HitCharacters;
 
+		// 피격당한 플레이어와 피격한 총합 데미지를 저장할 배열
+		TMap<APlayerCharacter*, float> DamageMap;
+
+		// 바디샷 데미지의 횟수만큼 데미지를 축적 시킨다. HitPair.Value * Damage
 		for (auto HitPair : HitMap)
 		{
 			// 피격 반복문이 끝난후 생성한 테이블을 검사한다. 해당 반복문은 샷건에 피격단한 플레이어의 수만큼 반복된다.
 			if (HitPair.Key && InstigatorController)
 			{
+				DamageMap.Emplace(HitPair.Key, HitPair.Value * Damage);
+				// 임시배열에 피격당한 플레이어를 중복없이 추가해준다.
+				HitCharacters.AddUnique(HitPair.Key);
+			}
+		}
+
+		// 헤드샷 횟수만큼 데미지를 가산 시킨다. [HeadShotHitPair.Key] += HeadShotHitPair.Value * HeadShotDamage
+		for (auto HeadShotHitPair : HeadShotHitMap)
+		{
+			if (HeadShotHitPair.Key)
+			{
+				if (DamageMap.Contains(HeadShotHitPair.Key)) DamageMap[HeadShotHitPair.Key] += HeadShotHitPair.Value * HeadShotDamage;
+
+				else DamageMap.Emplace(HeadShotHitPair.Key, 1);
+
+				HitCharacters.AddUnique(HeadShotHitPair.Key);
+			}
+		}
+
+		// 배열의 모든플레이에어 데미지값이 가산된이후에 데미지를 한번에 전달 시킨다.
+		for (auto DamagePair : DamageMap)
+		{
+			if (DamagePair.Key && InstigatorController)
+			{
 				bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 
 				if (HasAuthority() && bCauseAuthDamage) // 서버 일때
 				{
-					 // 되감기 설정 OFF
+					// 되감기 설정 OFF
 					UGameplayStatics::ApplyDamage(
-						HitPair.Key,
-						Damage * HitPair.Value, // 피격수만큼 데미지
+						DamagePair.Key,
+						DamagePair.Value, // 헤드샷과 바디샷 모든데미지
 						InstigatorController,
 						this,
 						UDamageType::StaticClass()
 					);
 				}
-
-				// 임시배열에 피격당한 플레이어를 추가해준다.
-				HitCharacters.Add(HitPair.Key);
 			}
 		}
+
 		if (!HasAuthority() && bUseServerSideRewind) // 클라 일때
 		{
 			// 되감기 설정 ON

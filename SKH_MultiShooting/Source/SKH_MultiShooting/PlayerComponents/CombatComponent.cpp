@@ -170,8 +170,10 @@ void UCombatComponent::FireMultiHitScanWeapon()
 			Shotgun->ShotgunTraceEndWithScatter(HitTarget, HitTargets);
 			if (!Character->HasAuthority())
 			{
+				// 샷건 로컬 파이어
 				ShotgunLocalFire(HitTargets);
 			}
+			// 서버 샷건 파이어
 			ServerShotgunFire(HitTargets, EquippedWeapon->FireDelay);
 		}
 	}
@@ -246,6 +248,7 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 		CombatState = ECombatState::ECS_Unoccupied;
+		bLocallyReloading = false;
 		return;
 	}
 
@@ -269,8 +272,8 @@ void UCombatComponent::ShotgunLocalFire(const TArray<FVector_NetQuantize>& Trace
 		Character->PlayFireMontage(bAiming);
 		Shotgun->FireShotgun(TraceHitTarget);
 		CombatState = ECombatState::ECS_Unoccupied;
+		bLocallyReloading = false;
 	}
-
 }
 
 void UCombatComponent::StartFireTimer()
@@ -674,7 +677,7 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 	EquippedWeapon->AddAmmo(1);
 	// 샷건과 유탄발사기는 한발씩 장전할때마다 바로 쏠 수 있어야 한다
 	bCanFire = true;
-
+	
 
 	// 위작업으통하여 1번씩 탄창을 더하고 탄창이 꽉찼을경우 ShotgunEnd 섹션을 재생해야한다. (이작업은 서버에서만 실행된다. 때문에 클라이언트에서도 실행 시키기위해서는 Weapon 클래스의 복제된 변수실행 OnRep 함수에서도 같은 작업을 실행해 줘야 한다.
 	if (EquippedWeapon->IsFull() || CarriedAmmo == 0)
@@ -1094,12 +1097,11 @@ bool UCombatComponent::CanFire()
 	if (EquippedWeapon == nullptr) return false;
 
 	// 샷건과 유탄발사기에 대하여 예외처리
-	if (!EquippedWeapon->IsEmpty() && bCanFire &&
-		CombatState == ECombatState::ECS_Reloading &&
-		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher))
-	{
-		return true;
-	}
+	if (!EquippedWeapon->IsEmpty() && 
+		bCanFire && 
+		CombatState == ECombatState::ECS_Reloading && 
+		(EquippedWeapon->GetWeaponType() == EWeaponType::EWT_ShotGun || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_GrenadeLauncher)) return true;
+
 
 	if (bLocallyReloading) return false;
 

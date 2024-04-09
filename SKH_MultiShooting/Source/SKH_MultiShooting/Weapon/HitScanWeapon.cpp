@@ -36,10 +36,13 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 
 			if (HasAuthority() && bCauseAuthDamage)
 			{
+				// 헤드샷 인지 판정
+				const float DamageToCause = FireHit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+
 				// 컨트롤러는 서버에서만 값을 가지고있으며 클라이언트에서는 null을 반환한다 따라서 해당 조건문은 플레이어 캐릭터 && 서버 && 서버 의 조건문으로 무조건 서버에서만 하는 작업이 된다. 데미지 계산은 서버에서만 한다.
 				UGameplayStatics::ApplyDamage(
 					PlayerCharacter,
-					Damage,
+					DamageToCause,
 					InstigatorController,
 					this,
 					UDamageType::StaticClass()
