@@ -889,16 +889,17 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	{
 		if (Shield >= Damage)
 		{
+			// 쉴드가 데미지보다 더 남아있는경우 쉴드의 값을 감소시키고 데미지는 0이 된다.
 			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield); 
-			
-			// 모든값이 쉴드로 상쇄된다면 체력에 미치는 데미지는 0이다.
 			DamageToHealth = 0;
 		}
 		else
 		{
-			// 쉴드가 0이 되어버리고나서는 들어오는 데미지의 값에서 쉴드(0)을 뺀값 즉, 데미지 그대로의 값을 체력에 미치는 데미지로 지정 한다.
-			Shield = 0.f;
+			// 만일 쉴드가 데미지보다 적을 경우 데미지의 값에 쉴드에 남아있는 값만큼을 제외하고 데미지를 계산한다.
 			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+
+			// 이후 쉴드는 모두 깎였기 때문에 마이너스값이 되지 않도록 0으로 설정해준다.
+			Shield = 0.f;
 		}
 	}
 

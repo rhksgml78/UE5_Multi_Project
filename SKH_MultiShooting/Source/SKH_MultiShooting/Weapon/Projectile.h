@@ -28,9 +28,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000;
 
-	// 데미지 관련
+	// 데미지 관련 (SSR을 사용하지않는 범위제미지 무기는 설정 필수!)
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 40.f;
 
 protected:
 	virtual void BeginPlay() override;

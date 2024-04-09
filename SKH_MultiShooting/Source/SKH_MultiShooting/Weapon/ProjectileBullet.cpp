@@ -62,16 +62,19 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	if (OwnerCharacter)
 	{
 		// 서버측되감기 SSR 을 사용하기위하여 구조 개선
-
 		AFirstPlayerController* OwnerController = Cast<AFirstPlayerController>(OwnerCharacter->Controller);
+
 		if (OwnerController)
 		{
 			if (OwnerCharacter->HasAuthority() && 
 				!bUseServerSideRewind)
 			{
 				// 서버, SSR사용 안함
+				
+				// 헤드샷 판정
+				const float DamageToCause = Hit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
 
-				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(OtherActor, DamageToCause, OwnerController, this, UDamageType::StaticClass());
 				
 				// 상속받은 히트 이벤트 에서 Destroy 가 실행되므로 나중에 실행시킨다.
 				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);

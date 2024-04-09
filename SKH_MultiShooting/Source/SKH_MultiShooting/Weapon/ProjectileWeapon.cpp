@@ -40,6 +40,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 					SpawnedProjectile->bUseServerSideRewind = false;
 					// 무기가 가지고있는 데미지값을 투사체에 적용
 					SpawnedProjectile->Damage = Damage;
+					SpawnedProjectile->HeadShotDamage = HeadShotDamage;
 				}
 				else
 				{
@@ -58,8 +59,6 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 					SpawnedProjectile->bUseServerSideRewind = true;
 					SpawnedProjectile->TraceStart = SocketTransform.GetLocation();
 					SpawnedProjectile->InitialVelocity = SpawnedProjectile->GetActorForwardVector() * SpawnedProjectile->InitialSpeed;
-					// 무기가 가지고있는 데미지값을 투사체에 적용
-					SpawnedProjectile->Damage = Damage;
 				}
 				else
 				{
@@ -79,6 +78,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 				SpawnedProjectile->bUseServerSideRewind = false;
 				// 무기가 가지고있는 데미지값을 투사체에 적용
 				SpawnedProjectile->Damage = Damage;
+				SpawnedProjectile->HeadShotDamage = HeadShotDamage;
 			}
 		}
 	}

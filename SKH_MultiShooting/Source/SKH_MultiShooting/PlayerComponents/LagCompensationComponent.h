@@ -117,8 +117,7 @@ public:
 		APlayerCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
-		float HitTime,
-		class AWeapon* DamageCauser);
+		float HitTime);
 
 	// ¼¦°Ç È÷Æ®½ºÄµ¿ë µÇ°¨±â
 	FShotgunServerSideRewindResult ShotgunServerSideRewind(

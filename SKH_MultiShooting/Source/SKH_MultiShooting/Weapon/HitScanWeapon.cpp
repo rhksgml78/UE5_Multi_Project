@@ -64,9 +64,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 						PlayerCharacter,
 						Start,
 						HitTarget,
-						PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime,
-						this
-					);
+						PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime);
 				}
 			}
 	
