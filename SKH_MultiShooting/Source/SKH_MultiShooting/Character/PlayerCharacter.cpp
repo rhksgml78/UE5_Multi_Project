@@ -353,7 +353,7 @@ void APlayerCharacter::BeginPlay()
 		AttachedGrenade->SetVisibility(false);
 	}
 
-	PlayerColorChange(FLinearColor::Green);
+	//PlayerColorChange(FLinearColor::Gray);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -471,6 +471,7 @@ void APlayerCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 	// 콜리전 무효화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Elim이펙트 실행
 	if (ElimBotEffect)
@@ -982,6 +983,10 @@ void APlayerCharacter::HideCameraIfCharacterClose()
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
+		if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh())
+		{
+			Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
 	}
 	else
 	{
@@ -989,6 +994,10 @@ void APlayerCharacter::HideCameraIfCharacterClose()
 		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+		if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh())
+		{
+			Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
 }
@@ -1052,6 +1061,7 @@ void APlayerCharacter::UpdateHUDAmmo()
 
 void APlayerCharacter::PollInit()
 {
+	// 플레이어스테이트가 검증될때까지 실행한다.
 	if (FirstPlayerState == nullptr)
 	{
 		FirstPlayerState = GetPlayerState<AFirstPlayerState>();
@@ -1059,6 +1069,9 @@ void APlayerCharacter::PollInit()
 		{
 			FirstPlayerState->AddToScore(0.f);
 			FirstPlayerState->AddToDefeats(0);
+
+			// 플레이어의 팀설정
+			SetTeamColor(FirstPlayerState->GetTeam());
 
 			APlayerGameState* PlayerGameState = Cast<APlayerGameState>(UGameplayStatics::GetGameState(this));
 			if (PlayerGameState && PlayerGameState->TopScoringPlayers.Contains(FirstPlayerState))
@@ -1190,6 +1203,39 @@ void APlayerCharacter::SpawnDefaultWeapon()
 	}
 }
 
+void APlayerCharacter::SetTeamColor(ETeam Team)
+{
+	if (GetMesh() == nullptr || OriginalMaterial == nullptr) return;
+
+	// 티셔츠의 색상은 8번에따라 변경한다.
+	switch (Team)
+	{
+	case ETeam::ET_RedTeam:
+		GetMesh()->SetMaterial(8, RedMaterial);
+		if (DissolveMaterialInstances[8])
+		{
+			DissolveMaterialInstances[8] = RedDissolveMatInst;
+		}
+		break;
+	case ETeam::ET_BlueTeam:
+		GetMesh()->SetMaterial(8, BlueMaterial);
+		if (DissolveMaterialInstances[8])
+		{
+			DissolveMaterialInstances[8] = BlueDissolveMatInst;
+		}
+		break;
+	case ETeam::ET_NoTeam:
+		GetMesh()->SetMaterial(8, OriginalMaterial);
+		if (DissolveMaterialInstances[8])
+		{
+			DissolveMaterialInstances[8] = RedDissolveMatInst;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void APlayerCharacter::MulticastGainedTheLead_Implementation()
 {
 	// 플레이어의 점수가 최고점일때 이펙트를 활성
@@ -1198,9 +1244,9 @@ void APlayerCharacter::MulticastGainedTheLead_Implementation()
 	{
 		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			CrownSystem,
-			GetCapsuleComponent(),
+			GetMesh(),
 			FName(),
-			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorLocation() + FVector(0.f, 0.f, BestPlayerEffectLocationZ),
 			GetActorRotation(),
 			EAttachLocation::KeepWorldPosition,
 			false

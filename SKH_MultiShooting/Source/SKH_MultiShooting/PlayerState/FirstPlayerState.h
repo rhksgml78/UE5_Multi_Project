@@ -12,7 +12,7 @@ UCLASS()
 class SKH_MULTISHOOTING_API AFirstPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-	
+
 public:
 	// 복제용 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -34,14 +34,17 @@ private:
 
 	UPROPERTY()
 	class AFirstPlayerController* Controller;
-	
+
 	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
 	int32 Defeats;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Team)
 	ETeam Team = ETeam::ET_NoTeam;
+
+	UFUNCTION()
+	void OnRep_Team();
 
 public:
 	FORCEINLINE ETeam GetTeam() const { return Team; }
-	FORCEINLINE void SetTeam(ETeam TeamToSet) { Team = TeamToSet; }
+	void SetTeam(ETeam TeamToSet);
 };

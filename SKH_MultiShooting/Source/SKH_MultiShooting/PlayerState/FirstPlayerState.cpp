@@ -69,6 +69,26 @@ void AFirstPlayerState::AddToDefeats(int32 DefeatsAmount)
 	}
 }
 
+void AFirstPlayerState::SetTeam(ETeam TeamToSet)
+{
+	Team = TeamToSet;
+
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->SetTeamColor(Team);
+	}
+}
+
+void AFirstPlayerState::OnRep_Team()
+{
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->SetTeamColor(Team);
+	}
+}
+
 void AFirstPlayerState::OnRep_Defeats()
 {
 	Character = Character == nullptr ? Cast<APlayerCharacter>(GetPawn()) : Character;

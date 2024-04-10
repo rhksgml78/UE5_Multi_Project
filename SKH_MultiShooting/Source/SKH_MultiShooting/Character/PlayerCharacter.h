@@ -6,6 +6,7 @@
 #include "SKH_MultiShooting/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
 #include "SKH_MultiShooting/PlayerTypes/CombatState.h"
+#include "SKH_MultiShooting/PlayerTypes/Team.h"
 
 #include "PlayerCharacter.generated.h"
 
@@ -86,6 +87,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
+
+	// 팀관련
+	void SetTeamColor(ETeam Team);
 
 	/*
 	서버의 되감기용 박스 충돌체 생성.
@@ -333,8 +337,21 @@ private:
 	UPROPERTY(EditAnywhere, Category = Elim)
 	TArray<UMaterialInstance*> DissolveMaterialInstances;
 
-	//UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
-	//UMaterialInstance* DissolveMaterialInstance;
+	// 팀에따라 Dissolve 색상이적용된 머티리얼인스턴스적용
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* RedMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* RedDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* BlueMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* BlueDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* OriginalMaterial;
 
 	// 플레이어 사망시 추가 이펙트 관련
 	UPROPERTY(EditAnywhere)
@@ -349,11 +366,14 @@ private:
 	UPROPERTY()
 	class AFirstPlayerState* FirstPlayerState;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Effect")
 	class UNiagaraSystem* CrownSystem;
 
 	UPROPERTY()
 	class UNiagaraComponent* CrownComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	float BestPlayerEffectLocationZ = 100;
 	
 	// 수류탄
 	UPROPERTY(VisibleAnywhere)
