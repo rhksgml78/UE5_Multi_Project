@@ -28,6 +28,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "SKH_MultiShooting/GameState/PlayerGameState.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -351,6 +352,8 @@ void APlayerCharacter::BeginPlay()
 	{
 		AttachedGrenade->SetVisibility(false);
 	}
+
+	PlayerColorChange(FLinearColor::Green);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -1223,4 +1226,39 @@ bool APlayerCharacter::IsLocallyReloading()
 	if (Combat == nullptr) return false;
 
 	return Combat->bLocallyReloading;
+}
+
+void APlayerCharacter::PlayerColorChange(FLinearColor PlayerChangeColor)
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh(); 
+
+	if (!SkeletalMeshComponent) return;
+
+	// 머티리얼 엘리먼트 8번에 해당하는 머티리얼
+	UMaterialInterface* MaterialInterface = SkeletalMeshComponent->GetMaterial(8);
+
+	// 머티리얼이 유효한지 확인
+	if (!MaterialInterface) return;
+
+	// 동적 머티리얼 인스턴스를 생성
+	UMaterialInstanceDynamic* DynamicMaterialInstance = Cast<UMaterialInstanceDynamic>(MaterialInterface);
+
+	if (!DynamicMaterialInstance)
+	{
+		// 동적 머티리얼 인스턴스를 생성할 수 없으면 새로운 인스턴스를 생성
+		DynamicMaterialInstance = UMaterialInstanceDynamic::Create(MaterialInterface, this);
+		SkeletalMeshComponent->SetMaterial(8, DynamicMaterialInstance); // 8은 머티리얼 슬롯 인덱스
+	}
+
+	// 만일 이후에도 생성이 실패할경우 
+	if (!DynamicMaterialInstance) return;
+
+	// Color Blend 1, Color Blend 2, Color Blend 3, Color Blend 4에 해당하는 파라미터 이름을 설정
+	FString ParameterNames[4] = { "Color Blend 1", "Color Blend 2", "Color Blend 3", "Color Blend 4" };
+
+	// Color Blend 1부터 Color Blend 4까지의 파라미터 값을 변경
+	for (int32 i = 0; i < 4; ++i)
+	{
+		DynamicMaterialInstance->SetVectorParameterValue(FName(*ParameterNames[i]), PlayerChangeColor);
+	}
 }
