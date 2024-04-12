@@ -115,6 +115,12 @@ protected:
 	UFUNCTION()
 	void OnRep_ShowTeamScores();
 
+	// 게임모드가 개인전일떄
+	FString GetInfoText(const TArray<class AFirstPlayerState*>& Players);
+
+	// 게임모드가 팀전일때
+	FString GetTeamsInfoText(class APlayerGameState* PlayerGameState);
+
 private:
 	// 메인메뉴 위젯
 	UPROPERTY(EditAnywhere, Category = HUD)

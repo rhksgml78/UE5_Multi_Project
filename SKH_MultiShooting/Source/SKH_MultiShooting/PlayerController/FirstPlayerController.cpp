@@ -14,6 +14,8 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "SKH_MultiShooting/HUD/ReturnToMainMenu.h"
+#include "SKH_MultiShooting/PlayerTypes/Announcement.h"
+
 
 void AFirstPlayerController::BeginPlay()
 {
@@ -775,7 +777,7 @@ void AFirstPlayerController::HandleCooldown()
 			// 대기중 안내 위젯 다시 표시하기
 			PlayerHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 
-			FString AnnouncementText("NEWGAME LOADING");
+			FString AnnouncementText = Announcement::NewGameLoading;
 
 			PlayerHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
 
@@ -787,38 +789,11 @@ void AFirstPlayerController::HandleCooldown()
 			{
 				TArray<AFirstPlayerState*> TopPlayers = PlayerGameState->TopScoringPlayers;
 
-				FString InfoTextString;
-
-				if (TopPlayers.Num() == 0)
-				{
-					// 최다 득점자가 없을경우 (게임시작후 그누구도 플레이어를 죽이지 않을경우)
-					InfoTextString = FString("No Winner.");
-				}
-				else if (TopPlayers.Num() == 1 && TopPlayers[0] == FirstPlayerState)
-				{
-					// 현재 플레이중인 플레이어가 최다득점자일 경우 현재 플레이어에게 위너임을 표시함
-					InfoTextString = FString("You Win!");
-				}
-				else if (TopPlayers.Num() == 1)
-				{
-					// 현재플레이어가아닌 다른 누군가의 플레이어가 최다 득점을 단독으로 승리하였을경우 해당 플레이어의 이름을 출력한다.
-					InfoTextString = FString::Printf(TEXT("Winner\n%s"), *TopPlayers[0]->GetPlayerName());
-
-				}
-				else if (TopPlayers.Num() > 1)
-				{
-					// 최다득점이 여러명일 경우
-					InfoTextString = FString("TopScores\n");
-
-					for (auto TiedPlayer : TopPlayers)
-					{
-						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
-					}
-				}
+				// 개인전인지 팀전인지에 따라 출력할 텍스트를 다르게 설정
+				FString InfoTextString = bShowTeamScores ? GetTeamsInfoText(PlayerGameState) : GetInfoText(TopPlayers);
 
 				// UI의 INFO참에 출력되는 텍스트 편집
 				PlayerHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
-
 			}
 		}
 	}
@@ -831,6 +806,87 @@ void AFirstPlayerController::HandleCooldown()
 		// 캐릭터가 발사하고 있는동안 쿨다운 상태가 될경우 총알이 다 떨어질때까지 발사한채로 있게되므로 컴포넌트에 접근하여 발사를 중단 시킨다.
 		PlayerCharacter->GetCombat()->FireButtonPressed(false);
 	}
+}
+
+FString AFirstPlayerController::GetInfoText(const TArray<class AFirstPlayerState*>& Players)
+{
+	AFirstPlayerState* FirstPlayerState = GetPlayerState<AFirstPlayerState>();
+
+	if (FirstPlayerState == nullptr) return FString();
+
+	FString InfoTextString;
+
+	if (Players.Num() == 0)
+	{
+		// 최다 득점자가 없을경우 (게임시작후 그누구도 플레이어를 죽이지 않을경우)
+		InfoTextString = Announcement::GameOver;
+	}
+	else if (Players.Num() == 1 && Players[0] == FirstPlayerState)
+	{
+		// 현재 플레이중인 플레이어가 최다득점자일 경우 현재 플레이어에게 위너임을 표시함
+		InfoTextString = Announcement::YouWinner;
+	}
+	else if (Players.Num() == 1)
+	{
+		// 현재플레이어가아닌 다른 누군가의 플레이어가 최다 득점을 단독으로 승리하였을경우 해당 플레이어의 이름을 출력한다.
+		InfoTextString = FString::Printf(TEXT("WINNER\n%s"), *Players[0]->GetPlayerName());
+
+	}
+	else if (Players.Num() > 1)
+	{
+		// 최다득점이 여러명일 경우
+		InfoTextString = Announcement::YouWinner;
+		InfoTextString.Append(FString("\n"));
+
+		for (auto TiedPlayer : Players)
+		{
+			InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+		}
+	}
+	return InfoTextString;
+}
+
+FString AFirstPlayerController::GetTeamsInfoText(APlayerGameState* PlayerGameState)
+{
+	if (PlayerGameState == nullptr) return FString();
+
+	FString InfoTextString;
+
+	// 레드, 블루 각팀의 스코어를 얻어와야한다.
+	const int32 RedTeamScore = PlayerGameState->RedTeamScore;
+	const int32 BlueTeamScore = PlayerGameState->BlueTeamScore;
+
+	if (RedTeamScore == 0 && BlueTeamScore == 0)
+	{
+		// 양쪽팀모두 킬스코어가 0점일경우 평화주의 커멘트
+		InfoTextString = Announcement::GameOfPacifism;
+	}
+	else if (RedTeamScore == BlueTeamScore)
+	{
+		// 양팀이 동점일 경우
+		InfoTextString = Announcement::TieGame;
+	}
+	else
+	{
+		// 두팀중 한팀의 점수가 더 높은경우 해당팀 출력
+		if (RedTeamScore > BlueTeamScore)
+		{
+			// 레드팀 승리
+			InfoTextString = Announcement::RedTeamWin;
+			InfoTextString.Append(TEXT("\n\n"));
+			InfoTextString.Append(FString::Printf(TEXT("RED SCORE : %d\n"), RedTeamScore));
+			InfoTextString.Append(FString::Printf(TEXT("BLUE SCORE : %d\n"), BlueTeamScore));
+		}
+		else if (RedTeamScore < BlueTeamScore)
+		{
+			// 블루팀 승리
+			InfoTextString = Announcement::BlueTeamWin;
+			InfoTextString.Append(TEXT("\n\n"));
+			InfoTextString.Append(FString::Printf(TEXT("BLUE SCORE : %d\n"), BlueTeamScore));
+			InfoTextString.Append(FString::Printf(TEXT("RED SCORE : %d\n"), RedTeamScore));
+		}
+	}
+	return InfoTextString;
 }
 
 void AFirstPlayerController::SetSpeedUi(bool isVisible)
