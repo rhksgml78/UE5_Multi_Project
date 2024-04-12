@@ -249,7 +249,8 @@ void AWeapon::SpendRound()
 		// 서버에서는 각클라이언트에 함수를 호출시킨다.
 		ClientUpdateAmmo(Ammo);
 	}
-	else
+	else if (PlayerOwnerCharacter && 
+		PlayerOwnerCharacter->IsLocallyControlled())
 	{
 		// 서버에서는 해당작업 시퀀스의 횟수를 증가시킨다.
 		++Sequence;

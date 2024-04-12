@@ -21,6 +21,9 @@ public:
 	// 데미지 전달
 	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage) override;
 
+	// 점수 계산
+	virtual void PlayerEliminated(class APlayerCharacter* ElimmedCharacter, class AFirstPlayerController* VictimController, AFirstPlayerController* AttackerController) override;
+
 protected:
 	// 매치스테이트가 변경될경우 실행되는 함수 재정의
 	virtual void HandleMatchHasStarted() override;

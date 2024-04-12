@@ -1,6 +1,7 @@
 #include "PlayerGameState.h"
 #include "Net/UnrealNetwork.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 
 void APlayerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -36,20 +37,48 @@ void APlayerGameState::UpdateTopScore(AFirstPlayerState* ScoringPlayer)
 
 void APlayerGameState::RedTeamScores()
 {
+	// 서버에서는 변수의 실값을 업데이트하고 플레이어(개인)의 HUD를 업데이트
 	++RedTeamScore;
+
+	AFirstPlayerController* PlayerController = Cast<AFirstPlayerController>(GetWorld()->GetFirstPlayerController());
+
+	if (PlayerController)
+	{
+		PlayerController->SetHUDRedTeamScore(RedTeamScore);
+	}
 }
 
 void APlayerGameState::BlueTeamScores()
 {
+	// 서버에서는 변수의 실값을 업데이트하고 플레이어(개인)의 HUD를 업데이트
 	++BlueTeamScore;
+
+	AFirstPlayerController* PlayerController = Cast<AFirstPlayerController>(GetWorld()->GetFirstPlayerController());
+
+	if (PlayerController)
+	{
+		PlayerController->SetHUDBlueTeamScore(BlueTeamScore);
+	}
 }
 
 void APlayerGameState::OnRep_RedTeamScore()
 {
+	// 변수가 업데이트될때 클라이언트는 플레이어(개인)의 HUD를 업데이트
+	AFirstPlayerController* PlayerController = Cast<AFirstPlayerController>(GetWorld()->GetFirstPlayerController());
 
+	if (PlayerController)
+	{
+		PlayerController->SetHUDRedTeamScore(RedTeamScore);
+	}
 }
 
 void APlayerGameState::OnRep_BlueTeamScore()
 {
+	// 변수가 업데이트될때 클라이언트는 플레이어(개인)의 HUD를 업데이트
+	AFirstPlayerController* PlayerController = Cast<AFirstPlayerController>(GetWorld()->GetFirstPlayerController());
 
+	if (PlayerController)
+	{
+		PlayerController->SetHUDBlueTeamScore(BlueTeamScore);
+	}
 }

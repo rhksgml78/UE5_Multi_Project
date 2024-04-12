@@ -1,6 +1,7 @@
 #include "TeamsGameMode.h"
 #include "SKH_MultiShooting/GameState/PlayerGameState.h"
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
+#include "SKH_MultiShooting/PlayerController/FirstPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 ATeamsGameMode::ATeamsGameMode()
@@ -79,6 +80,36 @@ float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim
 	}
 
 	return BaseDamage;
+}
+
+void ATeamsGameMode::PlayerEliminated(APlayerCharacter* ElimmedCharacter, AFirstPlayerController* VictimController, AFirstPlayerController* AttackerController)
+{
+	// 슈퍼버전에서는 단순히 개인플레이어의 점수를 계산하고 HUD를 업데이트한다.
+	Super::PlayerEliminated(ElimmedCharacter, VictimController, AttackerController);
+
+	// 이후 해당 클래스에서는 팀점수의 계산을 실행한다.
+	APlayerGameState* PlayerGameState = Cast<APlayerGameState>(UGameplayStatics::GetGameState(this));
+
+	AFirstPlayerState* AttackerPlayerState = AttackerController ? Cast<AFirstPlayerState>(AttackerController->PlayerState) : nullptr;
+
+	AFirstPlayerState* VictimPlayerState = VictimController ? Cast<AFirstPlayerState>(VictimController->PlayerState) : nullptr;
+
+	// 게임상태와 공격한 플레이어의 상태가 검증되고
+	if (PlayerGameState && AttackerPlayerState && VictimPlayerState)
+	{
+		if (AttackerPlayerState != VictimPlayerState)
+		{
+			// 공격한 플레이어의 팀 상태에따라 해당팀의 점수에 점수를 더한다.
+			if (AttackerPlayerState->GetTeam() == ETeam::ET_BlueTeam)
+			{
+				PlayerGameState->BlueTeamScores();
+			}
+			if (AttackerPlayerState->GetTeam() == ETeam::ET_RedTeam)
+			{
+				PlayerGameState->RedTeamScores();
+			}
+		}
+	}
 }
 
 void ATeamsGameMode::HandleMatchHasStarted()

@@ -578,11 +578,12 @@ void UCombatComponent::ReloadEmptyWeapon()
 void UCombatComponent::Reload()
 {
 	// 소지한 탄약의 수가 0보다 크고 플레이어가 리로드 상태가 아닐경우
-	if (CarriedAmmo > 0 && 
-		CombatState == ECombatState::ECS_Unoccupied && 
+	if (CarriedAmmo > 0 &&
+		CombatState == ECombatState::ECS_Unoccupied &&
 		EquippedWeapon &&
 		!EquippedWeapon->IsFull() &&
-		!bLocallyReloading)
+		!bLocallyReloading && 
+		!Character->IsElimmed())
 	{
 		// 서버 실행 함수를 호출한다.
 		ServerReload();
@@ -597,19 +598,21 @@ void UCombatComponent::ServerReload_Implementation()
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
 	CombatState = ECombatState::ECS_Reloading;
-	if (!Character->IsLocallyControlled())
+	if (!Character->IsLocallyControlled()) HandleReload();
+}
+
+void UCombatComponent::HandleReload()
+{
+	if (Character)
 	{
-		HandleReload();
+		Character->PlayReLoadMontage();
 	}
 }
 
 void UCombatComponent::FinishReloading()
 {
 	// BP에서 호출되는 노티파이 연결 함수.
-	if (Character == nullptr)
-	{
-		return;
-	}
+	if (Character == nullptr) return;
 
 	bLocallyReloading = false;
 
@@ -632,6 +635,7 @@ void UCombatComponent::UpdateAmmoValues()
 
 	// 모든 플레이어의 탄약갯수는 서버에서 계산
 	int32 ReloadAmount = AmountToReload();
+
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		// 여분탄약의 갯수에서 재장전할 만큼의 탄약을 감소시키고 대입한다.
@@ -644,7 +648,6 @@ void UCombatComponent::UpdateAmmoValues()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-
 	EquippedWeapon->AddAmmo(ReloadAmount);
 }
 
@@ -773,14 +776,6 @@ void UCombatComponent::OnRep_CombatState()
 	}
 }
 
-void UCombatComponent::HandleReload()
-{
-	if (Character)
-	{
-		Character->PlayReLoadMontage();
-	}
-}
-
 int32 UCombatComponent::AmountToReload()
 {
 	// 탄약의 갯수는 무기자체가들고 있기 때문에 웨폰 클래스에서 값을 가져 와야 함.
@@ -795,9 +790,7 @@ int32 UCombatComponent::AmountToReload()
 		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 		// 최소의 갯수는 들고있을수있는 탄창에서 사용후 소모된양 혹은 소지중인(리로드할수있는)남은 탄약중 적은 쪽의 숫자로 지정
 		int32 Least = FMath::Min(RoomInMag, AmountCarried);
-
 		return FMath::Clamp(RoomInMag, 0, Least);
-
 	}
 
 	// 무기의 타입이 지정되어 있지 않다면 0을 반환

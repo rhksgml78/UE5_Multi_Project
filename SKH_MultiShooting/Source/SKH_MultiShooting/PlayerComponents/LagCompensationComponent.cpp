@@ -650,14 +650,34 @@ void ULagCompensationComponent::CacheBoxPositions(APlayerCharacter* HitCharacter
 
 void ULagCompensationComponent::MoveBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package)
 {
+
 	if (HitCharacter == nullptr) return;
-	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+
+	// 수정전
+	//for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+	//{
+	//	if (HitBoxPair.Value != nullptr)
+	//	{
+	//		HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
+	//		HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
+	//		HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
+	//	}
+	//}
+
+	// 수정후
+	for (TTuple<FName, UBoxComponent*>& HitBoxPair : HitCharacter->HitCollisionBoxes)
 	{
 		if (HitBoxPair.Value != nullptr)
 		{
-			HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
-			HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
-			HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
+			const FBoxInformation* BoxValue = Package.HitBoxInfo.Find(HitBoxPair.Key);
+
+			if (BoxValue)
+			{
+				HitBoxPair.Value->SetWorldLocation(BoxValue->Location);
+				HitBoxPair.Value->SetWorldRotation(BoxValue->Rotation);
+				HitBoxPair.Value->SetBoxExtent(BoxValue->BoxExtent);
+			}
+
 		}
 	}
 }
@@ -665,14 +685,33 @@ void ULagCompensationComponent::MoveBoxes(APlayerCharacter* HitCharacter, const 
 void ULagCompensationComponent::ResetHitBoxes(APlayerCharacter* HitCharacter, const FFramePackage& Package)
 {
 	if (HitCharacter == nullptr) return;
-	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+
+	// 수정전
+	//for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+	//{
+	//	if (HitBoxPair.Value != nullptr)
+	//	{
+	//		HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
+	//		HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
+	//		HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
+	//		HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//	}
+	//}
+
+	// 수정후
+	for (TTuple<FName, UBoxComponent*>& HitBoxPair : HitCharacter->HitCollisionBoxes)
 	{
 		if (HitBoxPair.Value != nullptr)
 		{
-			HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
-			HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
-			HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
-			HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			const FBoxInformation* BoxValue = Package.HitBoxInfo.Find(HitBoxPair.Key);
+
+			if (BoxValue)
+			{
+				HitBoxPair.Value->SetWorldLocation(BoxValue->Location);
+				HitBoxPair.Value->SetWorldRotation(BoxValue->Rotation);
+				HitBoxPair.Value->SetBoxExtent(BoxValue->BoxExtent);
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	}
 }
