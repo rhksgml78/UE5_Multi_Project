@@ -23,6 +23,10 @@ public:
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 	// 플레이어 사망시 재생할 애니메이션 호출 함수
 	void PlayDefeatsAnimation();
@@ -42,8 +46,8 @@ public:
 	virtual void ReceivedPlayer() override;
 
 	// 게임의 매치 상태 관련
-	void OnMatchStateSet(FName State);
-	void HandleMatchHasStarted();
+	void OnMatchStateSet(FName State, bool bTeamsMatch = false);
+	void HandleMatchHasStarted(bool bTeamsMatch = false);
 
 	// 게임이 종료시간이 되었을때 쿨다운상태에서 실행
 	void HandleCooldown();
@@ -103,6 +107,13 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	// 게임모드의 상태(팀전)에 관한 복제변수
+	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
+	bool bShowTeamScores = false;
+
+	UFUNCTION()
+	void OnRep_ShowTeamScores();
 
 private:
 	// 메인메뉴 위젯

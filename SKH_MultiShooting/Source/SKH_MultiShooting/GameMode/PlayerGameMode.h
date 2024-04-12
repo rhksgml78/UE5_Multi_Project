@@ -34,6 +34,8 @@ public:
 	// 플레이어가 게임을 떠날때
 	void PlayerLeftGame(class AFirstPlayerState* PlayerLeaving);
 
+	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage);
+
 	// 플레이를 시작할 타이머
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f; // 대기 시간
@@ -45,6 +47,9 @@ public:
 	float CooldownTime = 10.f; // 게임 시간이 종료되고 쿨타임
 
 	float LevelStartingTime = 0.f;
+
+	// 게임모드가 팀전인지 개인전인지 확인하는 변수
+	bool bTeamsMatch = false;
 
 protected:
 	virtual void BeginPlay() override;

@@ -199,7 +199,8 @@ void APlayerCharacter::Destroyed()
 		ElimBotComponent->DestroyComponent();
 	}
 
-	APlayerGameMode* PlayerGameMode = Cast<APlayerGameMode>(UGameplayStatics::GetGameMode(this));
+	PlayerGameMode = PlayerGameMode == nullptr ? GetWorld()->GetAuthGameMode<APlayerGameMode>() : PlayerGameMode;
+
 	bool bMatchNotInProgress = PlayerGameMode && PlayerGameMode->GetMatchState() != MatchState::InProgress;
 
 	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress)
@@ -527,7 +528,7 @@ void APlayerCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 
 void APlayerCharacter::ElimTimerFinishied()
 {
-	APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
+	PlayerGameMode = PlayerGameMode == nullptr ? GetWorld()->GetAuthGameMode<APlayerGameMode>() : PlayerGameMode;
 
 	// 멀티캐스트Elim 함수에서 갱신된 변수에 따라 플레이어가 게임을 떠난경우와 그렇지 않은경우 다른 로직을 실행한다.
 	if (PlayerGameMode && !bLeftGame)
@@ -573,7 +574,7 @@ void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 void APlayerCharacter::ServerLeavGame_Implementation()
 {
 	// 게임모드와 상태를 얻어 실행한다. 이때 게임모드는 Server 가관리하고있으므로 서버의 게임모드인 AuthGameMode 를 통하여 얻는다.
-	APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
+	PlayerGameMode = PlayerGameMode == nullptr ? GetWorld()->GetAuthGameMode<APlayerGameMode>() : PlayerGameMode;
 
 	FirstPlayerState = FirstPlayerState == nullptr ? GetPlayerState<AFirstPlayerState>() : FirstPlayerState;
 
@@ -884,8 +885,13 @@ void APlayerCharacter::SimProxiesTurn()
 
 void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	PlayerGameMode = PlayerGameMode == nullptr ? GetWorld()->GetAuthGameMode<APlayerGameMode>() : PlayerGameMode;
+
 	// 플레이어가 Elimeed 처리가 되지 않은상태에서 중복된 데미지를 입기 대문에 해당변수가 한프레임에 변경되었을경우 또다시 데미지를 받지 않도록 제한을 둔다.
-	if (bElimmed) return;
+	if (bElimmed || PlayerGameMode == nullptr) return;
+
+	// 데미지의 값을 팀일경우 0으로 반환시킨다.(TeamGameMode 사용시 / PlayerGameMode 사용시 일반적인 데미지의 값 적용)
+	Damage = PlayerGameMode->CalculateDamage(InstigatorController, Controller, Damage);
 
 	// 우선 첼력이 깍이기전에 쉴드가 먼저 깍여야 한다.
 	float DamageToHealth = Damage;
@@ -920,7 +926,6 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	// 체력이 0이 되었을때
 	if (Health == 0.f)
 	{
-		APlayerGameMode* PlayerGameMode = GetWorld()->GetAuthGameMode<APlayerGameMode>();
 		if (PlayerGameMode)
 		{
 			FirstPlayerController = FirstPlayerController == nullptr ? Cast<AFirstPlayerController>(Controller) : FirstPlayerController;
@@ -1189,7 +1194,7 @@ void APlayerCharacter::SetSpeedUi(bool isVisible)
 
 void APlayerCharacter::SpawnDefaultWeapon()
 {
-	APlayerGameMode* PlayerGameMode = Cast<APlayerGameMode>(UGameplayStatics::GetGameMode(this));
+	PlayerGameMode = PlayerGameMode == nullptr ? GetWorld()->GetAuthGameMode<APlayerGameMode>() : PlayerGameMode;
 
 	UWorld* World = GetWorld();
 	if (PlayerGameMode && World && !bElimmed && DefaultWeaponClass)

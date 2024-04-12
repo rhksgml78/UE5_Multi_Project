@@ -35,7 +35,7 @@ void APlayerGameMode::OnMatchStateSet()
 		if (PlayerController)
 		{
 			// 상속받는 MatchState 변수
-			PlayerController->OnMatchStateSet(MatchState);
+			PlayerController->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
 }
@@ -182,4 +182,9 @@ void APlayerGameMode::PlayerLeftGame(class AFirstPlayerState* PlayerLeaving)
 		// 떠나는 플레이어는 Elim을 실행시킨다.
 		CharacterLeaving->Elim(true);
 	}
+}
+
+float APlayerGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	return BaseDamage;
 }

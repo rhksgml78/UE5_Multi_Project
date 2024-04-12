@@ -28,6 +28,7 @@ void AFirstPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFirstPlayerController, MatchState);
+	DOREPLIFETIME(AFirstPlayerController, bShowTeamScores);
 }
 
 void AFirstPlayerController::SetupInputComponent()
@@ -523,6 +524,69 @@ void AFirstPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 }
 
+void AFirstPlayerController::HideTeamScores()
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->RedTeamScore &&
+		PlayerHUD->PlayerOverlay->BlueTeamScore &&
+		PlayerHUD->PlayerOverlay->RedBlueFlag;
+	if (bHUDValid)
+	{
+		PlayerHUD->PlayerOverlay->RedTeamScore->SetText(FText());
+		PlayerHUD->PlayerOverlay->BlueTeamScore->SetText(FText());
+		PlayerHUD->PlayerOverlay->RedBlueFlag->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void AFirstPlayerController::InitTeamScores()
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->RedTeamScore &&
+		PlayerHUD->PlayerOverlay->BlueTeamScore &&
+		PlayerHUD->PlayerOverlay->RedBlueFlag;
+	if (bHUDValid)
+	{
+		FString Zero("0");
+		PlayerHUD->PlayerOverlay->RedTeamScore->SetText(FText::FromString(Zero));
+		PlayerHUD->PlayerOverlay->BlueTeamScore->SetText(FText::FromString(Zero));
+		PlayerHUD->PlayerOverlay->RedBlueFlag->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AFirstPlayerController::SetHUDRedTeamScore(int32 RedScore)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->RedTeamScore;
+	if (bHUDValid)
+	{
+		FString ScoreText = FString::Printf(TEXT("%d"), RedScore);
+		PlayerHUD->PlayerOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
+void AFirstPlayerController::SetHUDBlueTeamScore(int32 BlueScore)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bHUDValid = PlayerHUD &&
+		PlayerHUD->PlayerOverlay &&
+		PlayerHUD->PlayerOverlay->BlueTeamScore;
+	if (bHUDValid)
+	{
+		FString ScoreText = FString::Printf(TEXT("%d"), BlueScore);
+		PlayerHUD->PlayerOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
 void AFirstPlayerController::SetHUDTime()
 {
 	float TimeLeft = 0.f;
@@ -614,7 +678,7 @@ void AFirstPlayerController::PollInit()
 	}
 }
 
-void AFirstPlayerController::OnMatchStateSet(FName State)
+void AFirstPlayerController::OnMatchStateSet(FName State, bool bTeamsMatch)
 {
 	// 플레이어 게임모드 클래스에서 해당 함수를 호출하여 매치 스테이트를 변경하고있음. 변경직후 복제된 변수이기 때문에 OnRep_MatchState 함수가 실행
 
@@ -623,7 +687,7 @@ void AFirstPlayerController::OnMatchStateSet(FName State)
 
 	if (MatchState == MatchState::InProgress)
 	{
-		HandleMatchHasStarted();
+		HandleMatchHasStarted(bTeamsMatch);
 	}
 	else if (MatchState == MatchState::Cooldown)
 	{
@@ -644,8 +708,14 @@ void AFirstPlayerController::OnRep_MatchState()
 	}
 }
 
-void AFirstPlayerController::HandleMatchHasStarted()
+void AFirstPlayerController::HandleMatchHasStarted(bool bTeamsMatch)
 {
+	// 복제된 변수에 값 변경 적용하기 (값의 변경은 서버에서만 실행되도록)
+	if (HasAuthority())
+	{
+		bShowTeamScores = bTeamsMatch;
+	}
+
 	// 게임실행시
 	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
 	if (PlayerHUD)
@@ -660,6 +730,30 @@ void AFirstPlayerController::HandleMatchHasStarted()
 			// 대기중 안내 위젯은 숨기기
 			PlayerHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
+
+		if (!HasAuthority()) return;
+		// 아래의 함수들은 서버에서만 실행되고 클라이언트는 복제된변수가 변경될때 자동으로 실행되므로 리턴으로 실행되지 않도록 한다.
+		if (bTeamsMatch)
+		{
+			InitTeamScores();
+		}
+		else
+		{
+			HideTeamScores();
+		}
+	}
+}
+
+void AFirstPlayerController::OnRep_ShowTeamScores()
+{
+	// 복제된값이 변경됨에따라 클라이언트에서 실행될 함수
+	if (bShowTeamScores)
+	{
+		InitTeamScores();
+	}
+	else
+	{
+		HideTeamScores();
 	}
 }
 

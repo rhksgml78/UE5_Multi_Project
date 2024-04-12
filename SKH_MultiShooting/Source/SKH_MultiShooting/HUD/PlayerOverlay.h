@@ -57,6 +57,15 @@ public:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	class UWidgetAnimation* HighPingAnimation;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* RedTeamScore;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* BlueTeamScore;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* RedBlueFlag;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "BluePrintEvent")
 	void PlayDeafeats();
 

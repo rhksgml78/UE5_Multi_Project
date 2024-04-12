@@ -3,6 +3,12 @@
 #include "SKH_MultiShooting/PlayerState/FirstPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
+ATeamsGameMode::ATeamsGameMode()
+{
+	// 부모클래스의 변수를 재설정
+	bTeamsMatch = true;
+}
+
 void ATeamsGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	// 새로운 플레이어가 접속 했을 경우
@@ -52,6 +58,27 @@ void ATeamsGameMode::Logout(AController* Exiting)
 			PlayerGameState->BlueTeam.Remove(PlayerState);
 		}
 	}
+}
+
+float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	AFirstPlayerState* AttackerPState = Attacker->GetPlayerState<AFirstPlayerState>();
+	AFirstPlayerState* VictimPState = Victim->GetPlayerState<AFirstPlayerState>();
+	
+	if (AttackerPState == nullptr || VictimPState == nullptr) return BaseDamage;
+
+	if (AttackerPState == VictimPState) 
+	{
+		return BaseDamage;
+	}
+
+	if (AttackerPState->GetTeam() == VictimPState->GetTeam())
+	{
+		// 같은팀일경우 데미지 0반환
+		return 0.f;
+	}
+
+	return BaseDamage;
 }
 
 void ATeamsGameMode::HandleMatchHasStarted()

@@ -34,6 +34,16 @@ void APlayerGameState::UpdateTopScore(AFirstPlayerState* ScoringPlayer)
 	}
 }
 
+void APlayerGameState::RedTeamScores()
+{
+	++RedTeamScore;
+}
+
+void APlayerGameState::BlueTeamScores()
+{
+	++BlueTeamScore;
+}
+
 void APlayerGameState::OnRep_RedTeamScore()
 {
 

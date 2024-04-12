@@ -18,6 +18,9 @@ public:
 
 	void UpdateTopScore(class AFirstPlayerState* ScoringPlayer);
 
+	void RedTeamScores();
+	void BlueTeamScores();
+
 	UPROPERTY(Replicated)
 	TArray<class AFirstPlayerState*> TopScoringPlayers;
 
