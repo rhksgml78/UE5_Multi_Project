@@ -661,6 +661,9 @@ void APlayerCharacter::EquipButtonPressed()
 
 	if (Combat)
 	{
+		// 플레이어가 깃발을 들고있는 경우 무기장착및 교체 불가능
+		if (Combat->bHoldingTheFlag) return;
+
 		// 복제함수 호출
 		if (Combat->CombatState == ECombatState::ECS_Unoccupied)
 		{
@@ -700,6 +703,8 @@ void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 
 void APlayerCharacter::CrouchButtonPressed()
 {
+	if (Combat && Combat->bHoldingTheFlag) return;
+
 	if (bDisableGameplay) return;
 
 	if (bIsCrouched)
@@ -718,6 +723,8 @@ void APlayerCharacter::AimButtonPressed()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->SetAiming(true);
 	}
 }
@@ -728,6 +735,8 @@ void APlayerCharacter::AimButtonReleased()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->SetAiming(false);
 	}
 }
@@ -738,6 +747,8 @@ void APlayerCharacter::FireButtonPressed()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->FireButtonPressed(true);
 	}
 
@@ -749,6 +760,8 @@ void APlayerCharacter::FireButtonReleased()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->FireButtonPressed(false);
 	}
 
@@ -760,6 +773,8 @@ void APlayerCharacter::ReloadButtonPressed()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->Reload();
 	}
 }
@@ -770,12 +785,16 @@ void APlayerCharacter::GrenadeButtonPressed()
 
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
+
 		Combat->ThrowGrenade();
 	}
 }
 
 void APlayerCharacter::Jump()
 {
+	if (Combat && Combat->bHoldingTheFlag) return;
+
 	if (bDisableGameplay) return;
 
 	if (bIsCrouched)
