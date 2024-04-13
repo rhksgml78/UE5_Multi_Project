@@ -97,4 +97,8 @@ private:
 	// 재장전중 오른손 회전 방지 변수
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bTransformRightHand;
+
+	// 플레이어가 깃발을 가지고 있는지
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bHoldingTheFlag;
 };

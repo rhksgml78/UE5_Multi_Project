@@ -63,6 +63,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// 루트본 회전 관련 동기화
 	bRotateRootBone = PlayerCharacter->ShouldRotateRootBone();
 
+	// 깃발 소지 관련 
+	bHoldingTheFlag = PlayerCharacter->IsHoldingTheFlag();
+
 	// 애임의 회전값(Yaw)
 	FRotator AimRotation = PlayerCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(PlayerCharacter->GetVelocity());

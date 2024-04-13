@@ -1279,6 +1279,13 @@ bool APlayerCharacter::IsLocallyReloading()
 	return Combat->bLocallyReloading;
 }
 
+bool APlayerCharacter::IsHoldingTheFlag() const
+{
+	if (Combat == nullptr) return false;
+
+	return Combat->bHoldingTheFlag;
+}
+
 void APlayerCharacter::PlayerColorChange(FLinearColor PlayerChangeColor)
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh(); 

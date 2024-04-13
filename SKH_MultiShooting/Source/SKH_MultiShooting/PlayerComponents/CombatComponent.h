@@ -261,6 +261,9 @@ private:
 	// ¼¦°Ç ÀåÅº
 	void UpdateShotgunAmmoValues();
 
+	// ±ê¹ß °ü·Ã
+	bool bHoldingTheFlag = false;
+
 public:	
 	void SetMaxWalkSpeed(float Value);
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
