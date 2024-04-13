@@ -372,6 +372,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 void APlayerCharacter::RotateInPlace(float DeltaTime)
 {
+	// 자착 무기가 플래그일경우 함수를 조기 종료 해야한다.
+	if (Combat && Combat->bHoldingTheFlag)
+	{
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		TurningInplace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
 	// 입력이 제한될 경우 변수 설정
 	if (bDisableGameplay) 
 	{

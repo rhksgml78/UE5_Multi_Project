@@ -32,6 +32,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
+	DOREPLIFETIME(UCombatComponent, bHoldingTheFlag);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
@@ -303,6 +304,15 @@ void UCombatComponent::FireTimerFinished()
 	ReloadEmptyWeapon();
 }
 
+void UCombatComponent::OnRep_HoldingTheFlag()
+{
+	// bHoldingTheFlag 변수의 값이 변경될때 클라이언트에서 실행할 코드
+	if (bHoldingTheFlag && Character && Character->IsLocallyControlled())
+	{
+		//틀별히 할 일 아직없음!
+	}
+}
+
 void UCombatComponent::SetMaxWalkSpeed(float Value)
 {
 	if (Character)
@@ -318,23 +328,35 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// 만일 수류탄을 투척중일때(ECS_Unoccupied 가아닐때)는 리턴 해야한다
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
-	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flag)
 	{
-		// 기본무기가 장착된 상태에서 보조무기가 비어있다면 보조무기를 장착
-		EquipSecondaryWeapon(WeaponToEquip);
+		// 복제 변수의 값을 변경하여 클라이언트에 복사하고
+		bHoldingTheFlag = true;
+		// 왼손의 소켓에 장착한다
+		AttackFlagToLeftHand(WeaponToEquip);
+		// 이대 무기의 상태를 변경시켜 공격이 불가능하도록 한다. 무기의 State는 복제된 변수이기때문에 클라이언트에도 추가적인 작업이 자동으로 이루어진다.
+		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		WeaponToEquip->SetOwner(Character);
 	}
 	else
 	{
-		// 위의 조건문이아닐경우. 
-		// 주무기 보조무기 모두 비어있거나 
-		// 주무기만 비어있거나
-		// 주무기 보조무기가 모두 장착되어있거나
-		EquipPrimaryWeapon(WeaponToEquip);
+		if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+		{
+			// 기본무기가 장착된 상태에서 보조무기가 비어있다면 보조무기를 장착
+			EquipSecondaryWeapon(WeaponToEquip);
+		}
+		else
+		{
+			// 위의 조건문이아닐경우. 
+			// 주무기 보조무기 모두 비어있거나 
+			// 주무기만 비어있거나
+			// 주무기 보조무기가 모두 장착되어있거나
+			EquipPrimaryWeapon(WeaponToEquip);
+		}
+		// 아이템 장착시 정면으로 향하도록
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
 	}
-
-	// 아이템 장착시 정면으로 향하도록
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -539,6 +561,20 @@ void UCombatComponent::AttackActorToBackpack(AActor* ActorToAttach)
 	if (SecondarySocket)
 	{
 		SecondarySocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::AttackFlagToLeftHand(AWeapon* Flag)
+{
+	if (Character == nullptr ||
+		Character->GetMesh() == nullptr ||
+		Flag == nullptr) return;
+
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("FlagSocket"));
+
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(Flag, Character->GetMesh());
 	}
 }
 

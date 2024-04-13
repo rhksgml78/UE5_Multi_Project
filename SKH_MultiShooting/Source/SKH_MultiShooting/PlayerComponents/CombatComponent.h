@@ -65,6 +65,7 @@ public:
 	void AttachActorToLefttHand(AActor* ActorToAttach);
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttackActorToBackpack(AActor* ActorToAttach);
+	void AttackFlagToLeftHand(AWeapon* Flag);
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
 	void ReloadEmptyWeapon();
@@ -262,7 +263,11 @@ private:
 	void UpdateShotgunAmmoValues();
 
 	// ±ê¹ß °ü·Ã
+	UPROPERTY(ReplicatedUsing = OnRep_HoldingTheFlag)
 	bool bHoldingTheFlag = false;
+
+	UFUNCTION()
+	void OnRep_HoldingTheFlag();
 
 public:	
 	void SetMaxWalkSpeed(float Value);

@@ -212,6 +212,7 @@ public:
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE UWidgetComponent* GetPickupWidget() { return PickupWidget; }
 
 	// 외부에서 접근할 탄창이 비어있는지 학인할 함수
 	bool IsEmpty();
