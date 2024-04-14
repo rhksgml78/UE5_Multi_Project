@@ -269,6 +269,9 @@ private:
 	UFUNCTION()
 	void OnRep_HoldingTheFlag();
 
+	UPROPERTY()
+	AWeapon* TheFlag;
+
 public:	
 	void SetMaxWalkSpeed(float Value);
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }

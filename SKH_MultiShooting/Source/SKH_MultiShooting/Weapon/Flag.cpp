@@ -17,3 +17,51 @@ AFlag::AFlag()
 
 
 }
+
+void AFlag::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+
+	// 어태치 되어있는 무기를 월드상에 떨어뜨려두기
+	FDetachmentTransformRules DetechRules(EDetachmentRule::KeepWorld, true);
+	FlagMesh->DetachFromComponent(DetechRules);
+
+	// 소유자 비우기
+	SetOwner(nullptr);
+
+	// 플레이어와 컨트롤러도 비우기
+	PlayerOwnerCharacter = nullptr;
+	PlayerOwnerController = nullptr;
+}
+
+void AFlag::OnEquipped()
+{
+	ShowPickupWidget(false);
+	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FlagMesh->SetSimulatePhysics(false);
+	FlagMesh->SetEnableGravity(false);
+	FlagMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 윤곽선 설정 OFF
+	EnableCustomDepth(false);
+}
+
+void AFlag::OnDroped()
+{
+	if (HasAuthority())
+	{
+		// 서버에서 작업할 것
+		GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	FlagMesh->SetSimulatePhysics(true);
+	FlagMesh->SetEnableGravity(true);
+	FlagMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	FlagMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	FlagMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	FlagMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	// 윤곽선 설정 ON
+	FlagMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_WHITE);
+	FlagMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
+}

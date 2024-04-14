@@ -14,6 +14,11 @@ class SKH_MULTISHOOTING_API AFlag : public AWeapon
 
 public:
 	AFlag();
+	virtual void Dropped() override;
+
+protected:
+	virtual void OnEquipped() override;
+	virtual void OnDroped() override;
 
 private:
 	UPROPERTY(VisibleAnywhere)

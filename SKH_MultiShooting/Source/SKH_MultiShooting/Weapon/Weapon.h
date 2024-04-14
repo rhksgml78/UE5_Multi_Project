@@ -48,7 +48,7 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 
 	// 플레이어 사망시 무기 떨어뜰이기
-	void Dropped();
+	virtual void Dropped();
 
 	// 재장전후 탄약 갯수 늘리기
 	void AddAmmo(int32 AmmoToAdd);

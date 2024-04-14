@@ -332,11 +332,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		// 복제 변수의 값을 변경하여 클라이언트에 복사하고
 		bHoldingTheFlag = true;
+		// 무기의 상태를 변경하여 클라이언트 작업을 자동 실행하고
+		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
 		// 왼손의 소켓에 장착한다
 		AttackFlagToLeftHand(WeaponToEquip);
-		// 이대 무기의 상태를 변경시켜 공격이 불가능하도록 한다. 무기의 State는 복제된 변수이기때문에 클라이언트에도 추가적인 작업이 자동으로 이루어진다.
-		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
 		WeaponToEquip->SetOwner(Character);
+		TheFlag = WeaponToEquip;
 	}
 	else
 	{
