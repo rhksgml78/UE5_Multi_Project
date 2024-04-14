@@ -1318,6 +1318,15 @@ bool APlayerCharacter::IsHoldingTheFlag() const
 	return Combat->bHoldingTheFlag;
 }
 
+ETeam APlayerCharacter::GetTeam()
+{
+	FirstPlayerState = FirstPlayerState == nullptr ? GetPlayerState<AFirstPlayerState>() : FirstPlayerState;
+
+	if (FirstPlayerState == nullptr) return ETeam::ET_NoTeam;
+
+	return FirstPlayerState->GetTeam();
+}
+
 void APlayerCharacter::PlayerColorChange(FLinearColor PlayerChangeColor)
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh(); 

@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WeaponTypes.h"
+#include "SKH_MultiShooting/PlayerTypes/Team.h"
 
 #include "Weapon.generated.h"
 
@@ -204,6 +205,9 @@ private:
 	// 무기의 타입을 지정
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
+	UPROPERTY(EditAnywhere)
+	ETeam Team;
 
 public:	
 	void SetWeaponState(EWeaponState State);

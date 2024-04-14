@@ -87,6 +87,16 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	APlayerCharacter* PlayerCharcter = Cast<APlayerCharacter>(OtherActor);
 	if (PlayerCharcter)
 	{
+		if (WeaponType == EWeaponType::EWT_Flag && PlayerCharcter->GetTeam() != Team)
+		{
+			// 무기의 팀타입과 플레이어의 팀타입이 불일치시 함수 종료
+			return;
+		}
+		if (PlayerCharcter->IsHoldingTheFlag())
+		{
+			// 플레이어가 깃발을 소지하고있을때 무기에 오버랩하지 않도록
+			return;
+		}
 		PlayerCharcter->SetOverlappingWeapon(this);
 	}
 }
@@ -97,6 +107,16 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	APlayerCharacter* PlayerCharcter = Cast<APlayerCharacter>(OtherActor);
 	if (PlayerCharcter)
 	{
+		if (WeaponType == EWeaponType::EWT_Flag && PlayerCharcter->GetTeam() != Team)
+		{
+			// 무기의 팀타입과 플레이어의 팀타입이 불일치시 함수 종료
+			return;
+		}
+		if (PlayerCharcter->IsHoldingTheFlag())
+		{
+			// 플레이어가 깃발을 소지하고있을때 무기에 오버랩하지 않도록
+			return;
+		}
 		//플레이어의 오버랩웨폰 객체를 nullptr 로 변경
 		PlayerCharcter->SetOverlappingWeapon(nullptr);
 	}
