@@ -29,6 +29,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "SKH_MultiShooting/GameState/PlayerGameState.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "SKH_MultiShooting/PlayerStart/TeamPlayerStart.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -571,6 +572,52 @@ void APlayerCharacter::DropOrDestroyWeapons()
 	}
 }
 
+void APlayerCharacter::OnPlayerStateInitialized()
+{
+	// 점수 초기화
+	FirstPlayerState->AddToScore(0.f);
+	FirstPlayerState->AddToDefeats(0);
+
+	// 플레이어의 팀설정
+	SetTeamColor(FirstPlayerState->GetTeam());
+
+	// 팀이 결정된후 팀관련 스폰위치를 설정
+	SetSpawnPoint();
+}
+
+void APlayerCharacter::SetSpawnPoint()
+{
+	// 개인전일 경우 개인 스폰 위치에서 생성한다.
+
+	// 만일 팀전일경우 스폰 위치를 갱신시킨다.
+	if (HasAuthority() && FirstPlayerState->GetTeam() != ETeam::ET_NoTeam)
+	{
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, ATeamPlayerStart::StaticClass(), PlayerStarts);
+		TArray<ATeamPlayerStart*> TeamPlayerStarts;
+		for (auto Start : PlayerStarts)
+		{
+			ATeamPlayerStart* TeamStart = Cast<ATeamPlayerStart>(Start);
+
+			// 플레이어가 팀설정이되어있다면 해당팀과 동일한 팀 변수를 가지고있는 시작위치액터의 정보를 배열로 저장한다.
+			if (TeamStart && TeamStart->Team == FirstPlayerState->GetTeam())
+			{
+				TeamPlayerStarts.Add(TeamStart);
+			}
+		}
+
+		// 저장된 배열이 있을경우 랜덤한 배열의 위치정보로 저장한다.
+		if (TeamPlayerStarts.Num() > 0)
+		{
+			ATeamPlayerStart* ChosenPlayerStart = TeamPlayerStarts[FMath::RandRange(0, TeamPlayerStarts.Num() - 1)];
+			SetActorLocationAndRotation(
+				ChosenPlayerStart->GetActorLocation(),
+				ChosenPlayerStart->GetActorRotation()
+				);
+		}
+	}
+}
+
 void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 {
 	if (Weapon == nullptr) return;
@@ -1104,11 +1151,8 @@ void APlayerCharacter::PollInit()
 		FirstPlayerState = GetPlayerState<AFirstPlayerState>();
 		if (FirstPlayerState)
 		{
-			FirstPlayerState->AddToScore(0.f);
-			FirstPlayerState->AddToDefeats(0);
-
-			// 플레이어의 팀설정
-			SetTeamColor(FirstPlayerState->GetTeam());
+			// 초기화
+			OnPlayerStateInitialized();
 
 			APlayerGameState* PlayerGameState = Cast<APlayerGameState>(UGameplayStatics::GetGameState(this));
 			if (PlayerGameState && PlayerGameState->TopScoringPlayers.Contains(FirstPlayerState))

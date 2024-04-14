@@ -192,6 +192,10 @@ protected:
 	void DropOrDestroyWeapon(AWeapon* Weapon);
 	void DropOrDestroyWeapons();
 
+	// 플레이어가 생성될 위치 설정
+	void SetSpawnPoint();
+	void OnPlayerStateInitialized();
+
 	// 플레이어 캐릭터 스켈레탈 메시의 8번 머티리얼의 색상 변경하기, 팀이 나뉘는 것에따라 플레이어 티셔츠의 색상을 변경한다.
 	void PlayerColorChange(FLinearColor PlayerChangeColor);
 
