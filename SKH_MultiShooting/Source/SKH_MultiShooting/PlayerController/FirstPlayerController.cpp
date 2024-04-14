@@ -770,6 +770,7 @@ void AFirstPlayerController::HandleCooldown()
 		
 		bool bHUDValid = PlayerHUD->Announcement &&
 			PlayerHUD->Announcement->AnnouncementText &&
+			PlayerHUD->Announcement->WinnerTeam &&
 			PlayerHUD->Announcement->InfoText;
 
 		if (bHUDValid)
@@ -794,6 +795,12 @@ void AFirstPlayerController::HandleCooldown()
 
 				// UI의 INFO참에 출력되는 텍스트 편집
 				PlayerHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
+
+				// 만일 팀전일경우 GetTeamsInfoText 에서 bRedTeamWin 변수가 갱신 되므로 해당 변수를 통하여 WinnerTeam 텍스트를 변경한다. 추가적으로 색상도 변경
+				FString WinnerText = GetWinnerTeamInfoText(WinnerInfo);
+				FSlateColor WinnerColor = GetWinnerTeamInfoTextColor(WinnerInfo);
+				PlayerHUD->Announcement->WinnerTeam->SetText(FText::FromString(WinnerText));
+				PlayerHUD->Announcement->WinnerTeam->SetColorAndOpacity(WinnerColor);
 			}
 		}
 	}
@@ -806,6 +813,52 @@ void AFirstPlayerController::HandleCooldown()
 		// 캐릭터가 발사하고 있는동안 쿨다운 상태가 될경우 총알이 다 떨어질때까지 발사한채로 있게되므로 컴포넌트에 접근하여 발사를 중단 시킨다.
 		PlayerCharacter->GetCombat()->FireButtonPressed(false);
 	}
+}
+
+FString AFirstPlayerController::GetWinnerTeamInfoText(int32 WinnerTeam)
+{
+	switch (WinnerTeam)
+	{
+	case 0:
+		// 동점
+		FString();
+		break;
+	case 1:
+		// 레드승리
+		return FString::Printf(TEXT("RED TEAM WIN!"));
+		break;
+	case 2:
+		// 블루 승리
+		return FString::Printf(TEXT("BLUE TEAM WIN!"));
+		break;
+	default:
+		return FString();
+		break;
+	}
+	return FString();
+}
+
+FLinearColor AFirstPlayerController::GetWinnerTeamInfoTextColor(int32 WinnerTeam)
+{
+	switch (WinnerTeam)
+	{
+	case 0:
+		// 동점
+		return FLinearColor::White;
+		break;
+	case 1:
+		// 레드승리
+		return FLinearColor::Red;
+		break;
+	case 2:
+		// 블루 승리
+		return FLinearColor::Blue;
+		break;
+	default:
+		return FLinearColor::White;
+		break;
+	}
+	return FLinearColor::White;
 }
 
 FString AFirstPlayerController::GetInfoText(const TArray<class AFirstPlayerState*>& Players)
@@ -865,6 +918,7 @@ FString AFirstPlayerController::GetTeamsInfoText(APlayerGameState* PlayerGameSta
 	{
 		// 양팀이 동점일 경우
 		InfoTextString = Announcement::TieGame;
+		WinnerInfo = 0;
 	}
 	else
 	{
@@ -872,18 +926,16 @@ FString AFirstPlayerController::GetTeamsInfoText(APlayerGameState* PlayerGameSta
 		if (RedTeamScore > BlueTeamScore)
 		{
 			// 레드팀 승리
-			InfoTextString = Announcement::RedTeamWin;
-			InfoTextString.Append(TEXT("\n\n"));
 			InfoTextString.Append(FString::Printf(TEXT("RED SCORE : %d\n"), RedTeamScore));
 			InfoTextString.Append(FString::Printf(TEXT("BLUE SCORE : %d\n"), BlueTeamScore));
+			WinnerInfo = 1;
 		}
 		else if (RedTeamScore < BlueTeamScore)
 		{
 			// 블루팀 승리
-			InfoTextString = Announcement::BlueTeamWin;
-			InfoTextString.Append(TEXT("\n\n"));
 			InfoTextString.Append(FString::Printf(TEXT("BLUE SCORE : %d\n"), BlueTeamScore));
 			InfoTextString.Append(FString::Printf(TEXT("RED SCORE : %d\n"), RedTeamScore));
+			WinnerInfo = 2;
 		}
 	}
 	return InfoTextString;

@@ -392,9 +392,10 @@ private:
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
+	void SetHoldingTheFlag(bool bHolding);
 	bool IsWeaponEquipped();
 	bool IsAiming();
-
+	ETeam GetTeam();
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
 	ECombatState GetCombatState() const;
@@ -422,5 +423,4 @@ public:
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 	FORCEINLINE bool IsHoldingTheFlag() const;
-	ETeam GetTeam();
 };

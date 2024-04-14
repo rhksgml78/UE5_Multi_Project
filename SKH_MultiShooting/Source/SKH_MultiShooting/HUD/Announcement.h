@@ -19,8 +19,10 @@ public:
 	class UTextBlock* AnnouncementText;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* InfoText;
-
+	class UTextBlock* InfoText;	
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* WinnerTeam;
 
 protected:
 

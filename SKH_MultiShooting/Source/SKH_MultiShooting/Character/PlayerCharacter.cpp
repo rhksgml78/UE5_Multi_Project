@@ -382,6 +382,12 @@ void APlayerCharacter::RotateInPlace(float DeltaTime)
 		return;
 	}
 
+	if (Combat && Combat->EquippedWeapon)
+	{
+		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
+
 	// 입력이 제한될 경우 변수 설정
 	if (bDisableGameplay) 
 	{
@@ -1205,6 +1211,13 @@ void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 			OverlappingWeapon->ShowPickupWidget(true);
 		}
 	}
+}
+
+void APlayerCharacter::SetHoldingTheFlag(bool bHolding)
+{
+	if (Combat == nullptr) return;
+
+	Combat->bHoldingTheFlag = bHolding;
 }
 
 bool APlayerCharacter::IsWeaponEquipped()

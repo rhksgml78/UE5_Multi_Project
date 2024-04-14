@@ -118,6 +118,10 @@ protected:
 	// 게임모드가 개인전일떄
 	FString GetInfoText(const TArray<class AFirstPlayerState*>& Players);
 
+	int32 WinnerInfo = 0;
+	FString GetWinnerTeamInfoText(int32 WinnerTeam);
+	FLinearColor GetWinnerTeamInfoTextColor(int32 WinnerTeam);
+
 	// 게임모드가 팀전일때
 	FString GetTeamsInfoText(class APlayerGameState* PlayerGameState);
 
