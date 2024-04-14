@@ -45,6 +45,9 @@ public:
 	FMultiplayerOnDestroySessionComplete MultiplayerOnDestroySessionComplete;
 	FMultiplayerOnStartSessionComplete MultiplayerOnStartSessionComplete;
 
+	// 메인 메뉴에서 게임을 생성할때 설정할 값을 저장할 변수
+	int32 DesiredNumPublicConnections{};
+	FString DesiredMatchType{};
 protected:
 
 	//

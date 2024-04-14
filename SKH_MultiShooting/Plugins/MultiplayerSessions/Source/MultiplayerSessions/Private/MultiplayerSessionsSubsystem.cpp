@@ -21,6 +21,10 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
+	// 변수에 세션생성시 매개변수의 값들을 저장. 입장인원 & 매치타입
+	DesiredNumPublicConnections = NumPublicConnections;
+	DesiredMatchType = MatchType;
+
 	if (!SessionInterface.IsValid())
 	{
 		return;
