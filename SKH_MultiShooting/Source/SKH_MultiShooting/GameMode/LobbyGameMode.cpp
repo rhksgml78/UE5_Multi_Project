@@ -15,7 +15,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
 
-		// 검증
+		// 검증은 if가아닌 check를 사용하여 매치타입이 일치하지않을 경우 프로그램 강제종료
 		check(Subsystem);
 
 		if (NumberOfPlayers == Subsystem->DesiredNumPublicConnections)
@@ -26,20 +26,20 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 				bUseSeamlessTravel = true;
 
 				FString MatchType = Subsystem->DesiredMatchType;
-				if (MatchType == "FreeForAll")
+				if (MatchType == "FreeForAll") // 개인전 
 				{
 					// 만일 플레이할 맵이 각각 다르다면 엔진에서 생성한 맵의 이름으로 수정해야 한다.
-					World->ServerTravel(FString("/Game/Maps/MainPlayerMap?listen"));
+					World->ServerTravel(FString("/Game/Maps/Map_SinglePlay?listen"));
 				}
-				else if (MatchType == "Teams")
+				else if (MatchType == "Teams") // 팀전
 				{
 					// 만일 플레이할 맵이 각각 다르다면 엔진에서 생성한 맵의 이름으로 수정해야 한다.
-					World->ServerTravel(FString("/Game/Maps/MainPlayerMap?listen"));
+					World->ServerTravel(FString("/Game/Maps/Map_TeamPlay?listen"));
 				}
-				else if (MatchType == "CaptureTheFlag")
+				else if (MatchType == "CaptureTheFlag") // 팀전 깃발뺏기
 				{
 					// 만일 플레이할 맵이 각각 다르다면 엔진에서 생성한 맵의 이름으로 수정해야 한다.
-					World->ServerTravel(FString("/Game/Maps/MainPlayerMap?listen"));
+					World->ServerTravel(FString("/Game/Maps/Map_TeamFlag?listen"));
 				}
 			}
 		}
