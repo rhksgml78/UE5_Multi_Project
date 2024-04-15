@@ -63,16 +63,16 @@ void AFlag::ReSetFlag()
 	// 초기 위치,회전값으로 되돌리기
 	SetActorTransform(InitialTransform);
 
-	// 위치를 이동시킨뒤에 충돌타입을 바꾸어줘야 2회 카운팅오류가 없어진다.
-	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetAreaSphere()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-
 	// 소유자 비우기
 	SetOwner(nullptr);
 
 	// 플레이어와 컨트롤러도 비우기
 	PlayerOwnerCharacter = nullptr;
 	PlayerOwnerController = nullptr;
+
+	// 위치를 이동시킨뒤에 충돌타입을 바꾸어줘야 2회 카운팅오류가 없어진다.
+	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetAreaSphere()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 }
 
 void AFlag::OnEquipped()

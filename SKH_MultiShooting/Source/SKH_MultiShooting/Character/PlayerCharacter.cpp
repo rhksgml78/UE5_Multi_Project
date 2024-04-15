@@ -1322,7 +1322,7 @@ void APlayerCharacter::SetTeamColor(ETeam Team)
 		GetMesh()->SetMaterial(8, OriginalMaterial);
 		if (DissolveMaterialInstances[8])
 		{
-			DissolveMaterialInstances[8] = RedDissolveMatInst;
+			DissolveMaterialInstances[8] = OriginalMaterial;
 		}
 		break;
 	default:

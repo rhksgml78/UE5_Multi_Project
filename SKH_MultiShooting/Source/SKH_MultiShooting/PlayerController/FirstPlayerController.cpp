@@ -539,6 +539,7 @@ void AFirstPlayerController::HideTeamScores()
 	{
 		PlayerHUD->PlayerOverlay->RedTeamScore->SetText(FText());
 		PlayerHUD->PlayerOverlay->BlueTeamScore->SetText(FText());
+		PlayerHUD->PlayerOverlay->RedBlueFlag->SetOpacity(0.f);
 		PlayerHUD->PlayerOverlay->RedBlueFlag->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
@@ -557,6 +558,7 @@ void AFirstPlayerController::InitTeamScores()
 		FString Zero("0");
 		PlayerHUD->PlayerOverlay->RedTeamScore->SetText(FText::FromString(Zero));
 		PlayerHUD->PlayerOverlay->BlueTeamScore->SetText(FText::FromString(Zero));
+		PlayerHUD->PlayerOverlay->RedBlueFlag->SetOpacity(1.f);
 		PlayerHUD->PlayerOverlay->RedBlueFlag->SetVisibility(ESlateVisibility::Visible);
 	}
 }
@@ -733,30 +735,18 @@ void AFirstPlayerController::HandleMatchHasStarted(bool bTeamsMatch)
 			PlayerHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 
-		if (!HasAuthority()) return;
+		//if (!HasAuthority()) return;
 		// 아래의 함수들은 서버에서만 실행되고 클라이언트는 복제된변수가 변경될때 자동으로 실행되므로 리턴으로 실행되지 않도록 한다.
-		if (bTeamsMatch)
-		{
-			InitTeamScores();
-		}
-		else
-		{
-			HideTeamScores();
-		}
+		if (bShowTeamScores) InitTeamScores();
+		else if (!bShowTeamScores) HideTeamScores();
 	}
 }
 
 void AFirstPlayerController::OnRep_ShowTeamScores()
 {
 	// 복제된값이 변경됨에따라 클라이언트에서 실행될 함수
-	if (bShowTeamScores)
-	{
-		InitTeamScores();
-	}
-	else
-	{
-		HideTeamScores();
-	}
+	if (bShowTeamScores) InitTeamScores();
+	else if (!bShowTeamScores) HideTeamScores();
 }
 
 void AFirstPlayerController::HandleCooldown()
