@@ -11,6 +11,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 	// 서브시스템에 접근하여 데이터 확인
 	UGameInstance* GameInstance = GetGameInstance();
+
 	if (GameInstance)
 	{
 		UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
@@ -26,6 +27,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 				bUseSeamlessTravel = true;
 
 				FString MatchType = Subsystem->DesiredMatchType;
+
 				if (MatchType == "FreeForAll") // 개인전 
 				{
 					// 만일 플레이할 맵이 각각 다르다면 엔진에서 생성한 맵의 이름으로 수정해야 한다.
