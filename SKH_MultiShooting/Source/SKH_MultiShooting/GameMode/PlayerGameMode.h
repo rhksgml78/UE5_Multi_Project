@@ -36,15 +36,15 @@ public:
 
 	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage);
 
-	// 플레이를 시작할 타이머
+	// 게임모드 타이머 변수
 	UPROPERTY(EditDefaultsOnly)
-	float WarmupTime = 10.f; // 대기 시간
+	float WarmupTime = 10.f; // 대기 시간 (플레이어 입장 및 맵 로드)
 
 	UPROPERTY(EditDefaultsOnly)
-	float MatchTime = 120.f; // 게임 진행시간
+	float MatchTime = 120.f; // 실제 게임을 플레이 할 수 있는 시간
 
 	UPROPERTY(EditDefaultsOnly)
-	float CooldownTime = 10.f; // 게임 시간이 종료되고 쿨타임
+	float CooldownTime = 10.f; // 게임 시간이 종료후 정산을 위한 쿨타임
 
 	float LevelStartingTime = 0.f;
 

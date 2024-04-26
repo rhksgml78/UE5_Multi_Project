@@ -56,7 +56,7 @@ void ULagCompensationComponent::SaveFramePackage()
 		SaveFramePackage(ThisFrame);
 		FrameHistory.AddHead(ThisFrame);
 
-		//ShowFramePackage(ThisFrame, FColor::Red);
+		//ShowFramePackage(ThisFrame, FColor::Green);
 	}
 }
 
@@ -246,6 +246,7 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(
 
 	if (Character && HitCharacter && Confirm.bHitConfirmed && Character->GetEquippedWeapon())
 	{
+		// 컴포넌트를 통하여 피격위치를 확인하고 적절한 데미지를 적용(헤드샷판정)
 		const float Damage = Confirm.bHeadShot ? Character->GetEquippedWeapon()->GetHeadShotDamage() : Character->GetEquippedWeapon()->GetDamage();
 
 		UGameplayStatics::ApplyDamage(

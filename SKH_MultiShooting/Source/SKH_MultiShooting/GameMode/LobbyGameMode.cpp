@@ -9,14 +9,14 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	// 게임에 참가한 인원 확인 가능
 	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
 
-	// 서브시스템에 접근하여 데이터 확인
 	UGameInstance* GameInstance = GetGameInstance();
 
 	if (GameInstance)
 	{
+		// 서브시스템에 접근하여 데이터 확인
 		UMultiplayerSessionsSubsystem* Subsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
 
-		// 검증은 if가아닌 check를 사용하여 매치타입이 일치하지않을 경우 프로그램 강제종료
+		// 검증은 if가아닌 check를 사용하여 매치타입이 일치하지않을 경우 프로그램 강제종료 시키기
 		check(Subsystem);
 
 		if (NumberOfPlayers == Subsystem->DesiredNumPublicConnections)

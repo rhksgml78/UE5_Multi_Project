@@ -70,16 +70,17 @@ protected:
 	/*
 	*서버와 클라이언트의 시간차이 동기화
 	*/
-	// 현재 서버의 시간을 요청(클라이언트의 현재 시간기준)
+
+	// 서버의 시간 확인하여 클라이언트 동기화 함수를 실행
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float TimOfClientRequest);
 
-	// 클라이언트가 서버에 현재시간을 요청하였을경우 서버의 시간을 얻는다.
+	// 서버의 시간으로 클라이언트의 시간 동기화 진행
 	UFUNCTION(Client, Reliable)
 	void ClientReportServerTime(float TimeOfClientRequest, float TimeServerReceivedClientRequest);
 
-	// 클라이언트와 서버간의 차이시간을 저장할 멤버 변수
 	float ClientServerDelta = 0.f;
+
 	// 동기화를 얼마나 자주시킬지의 변수
 	UPROPERTY(EditAnywhere, Category = Time)
 	float TimeSyncFrequency = 5.f;

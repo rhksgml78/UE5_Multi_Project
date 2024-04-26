@@ -224,9 +224,8 @@ void AFirstPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch
 
 void AFirstPlayerController::ServerRequestServerTime_Implementation(float TimOfClientRequest)
 {
-	// 서버의 현재 시간 값을 저장
+	// 서버에서의 현재 시간 값을 저장
 	float ServerTimeOfReceipt = GetWorld()->GetTimeSeconds();
-
 	ClientReportServerTime(TimOfClientRequest, ServerTimeOfReceipt);
 }
 
@@ -234,15 +233,11 @@ void AFirstPlayerController::ClientReportServerTime_Implementation(float TimeOfC
 {
 	// 요청전송에소요한 시간을 계산한다.
 	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
-	
 	// 요청전송 편도 타임
 	SingleTripTime = 0.5f * RoundTripTime;
-
 	// 클라이언트가 서버에 요청을 보내고 서버에서 클라이언트로 회신하는 시간은 클라이언트가 요청~회신 한 총시간을 반으로 나눈 시간으로 볼 수 있다.
 	float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
-
 	ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
-
 }
 
 float AFirstPlayerController::GetServerTime()

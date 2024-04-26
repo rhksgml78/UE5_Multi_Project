@@ -93,6 +93,9 @@ public:
 
 	// ÅºÆÛÁü °ü·Ã
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseDrawDebugScatter = false;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	bool bUseScatter = false;
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
